@@ -1,0 +1,30 @@
+{
+  "n_rows": 5000,
+  "features": [
+    "Body Frame",
+    "Body Weight",
+    "Skin",
+    "Type of Hair",
+    "Memory",
+    "Mental Activity",
+    "Reaction under Adverse Situations",
+    "Sleep Pattern",
+    "Body Energy",
+    "Eating Habit",
+    "Hunger",
+    "Pace of Performing Work",
+    "Weather Conditions",
+    "Social Relations"
+  ],
+  "classes": [
+    "Kapha",
+    "Pitta",
+    "Vata"
+  ],
+  "metrics": {
+    "decision_tree_cv_accuracy_mean": 0.6159999999999999,
+    "decision_tree_cv_accuracy_std": 0.009143303560529977,
+    "random_forest_cv_accuracy_mean": 0.6386000000000001,
+    "random_forest_cv_accuracy_std": 0.010248902380255175
+  }
+}

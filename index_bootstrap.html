@@ -1,0 +1,3464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO -->
+    <meta name="description" content="A free, client-side Ayurvedic Prakriti assessment that suggests diet and lifestyle adjustments tailored to your dosha. No account required, no data leaves your device.">
+    <meta name="keywords" content="Prakriti, Ayurveda, dosha, Vata, Pitta, Kapha, constitution test, dosha quiz, Ayurvedic diet">
+    <meta name="author" content="Faisal Haque">
+    <link rel="canonical" href="https://prakriti-ai-bice.vercel.app/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Ayurvedic Prakriti and Diet Advisor">
+    <meta property="og:description" content="Estimate your Ayurvedic constitution and get personalised diet and lifestyle suggestions in your browser.">
+    <meta property="og:url" content="https://prakriti-ai-bice.vercel.app/">
+    <meta property="og:image" content="https://prakriti-ai-bice.vercel.app/og-cover.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Ayurvedic Prakriti and Diet Advisor">
+    <meta name="twitter:description" content="Estimate your Ayurvedic constitution and get personalised diet and lifestyle suggestions in your browser.">
+
+    <!-- Content Security Policy. Inline scripts and styles still appear inside this file, so 'unsafe-inline'
+         is currently required; remove it once those are extracted in the planned Vite migration. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://generativelanguage.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'">
+
+    <title>Ayurvedic Prakriti and Diet Advisor</title>
+
+    <!-- DOMPurify for XSS-safe HTML insertion. Run ./gen_sri.sh on the URL below before deploying
+         to lock the bytes with an `integrity="sha384-..." crossorigin="anonymous"` attribute. -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+    <script src="safe_html.js"></script>
+
+    <!-- Bootstrap CSS (pinned with SRI) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <!-- Bootstrap Icons. SRI is omitted because bootstrap-icons does not publish official per-version hashes;
+         run ./gen_sri.sh on the URL below before deploying to lock the bytes. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Modern Custom CSS -->
+    <style>
+        /* Import Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --card-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            --card-shadow-hover: 0 20px 60px rgba(0,0,0,0.15);
+            --border-radius: 16px;
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Animations */
+        .sidebar-text {
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        
+        #sidebar.collapsed .sidebar-text {
+            opacity: 0;
+            visibility: hidden;
+            width: 0;
+            overflow: hidden;
+        }
+        
+        #sidebar.collapsed .collapse-icon {
+            transform: rotate(180deg);
+        }
+        
+        .collapse-icon {
+            transition: var(--transition);
+        }
+        
+        /* Enhanced Hover Effects */
+        .hover-lift {
+            transition: var(--transition);
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--card-shadow-hover);
+        }
+        
+        /* Page Transitions */
+        .page {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: var(--transition);
+        }
+        
+        .page.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        /* Modern Assessment Question Styling */
+        .question-group {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        
+        .question-group::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--success-gradient);
+        }
+        
+        .question-group:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow-hover);
+        }
+        
+        .question-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+        
+        .question-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: rgba(248, 250, 252, 0.8);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid rgba(226, 232, 240, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option-label::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .option-label:hover::before {
+            left: 100%;
+        }
+        
+        .option-label:hover {
+            background: rgba(236, 253, 245, 0.8);
+            border-color: #10b981;
+            transform: translateX(4px);
+        }
+        
+        .option-label input[type="radio"] {
+            margin-right: 1rem;
+            accent-color: #10b981;
+            transform: scale(1.2);
+        }
+        
+        .option-label input[type="radio"]:checked ~ span,
+        .option-label:has(input[type="radio"]:checked) {
+            color: #059669;
+            font-weight: 600;
+        }
+        
+        .option-label:has(input[type="radio"]:checked) {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-color: #10b981;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.2);
+        }
+        
+        /* Modern Results Styling */
+        .results-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .primary-dosha-card {
+            background: var(--success-gradient);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+            color: white;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .primary-dosha-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 4s ease-in-out infinite;
+        }
+        
+        .dosha-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .dosha-item {
+            background: rgba(248, 250, 252, 0.8);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            transition: var(--transition);
+        }
+        
+        .dosha-item:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow);
+        }
+        
+        .ml-info {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .fallback-info {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        
+        /* Modern Sidebar Styling */
+        #sidebar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(15px);
+            border-right: 1px solid rgba(226, 232, 240, 0.5);
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        #sidebar.collapsed {
+            transform: translateX(-280px);
+        }
+        
+        #sidebar .bg-success {
+            background: var(--success-gradient) !important;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #sidebar .bg-success::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+        }
+        
+        .nav-link {
+            border-radius: 12px !important;
+            margin-bottom: 0.5rem;
+            transition: var(--transition) !important;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-link:hover {
+            background: rgba(16, 185, 129, 0.1) !important;
+            transform: translateX(4px);
+        }
+        
+        .nav-link.active {
+            background: var(--success-gradient) !important;
+            color: white !important;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        /* Modern Button Styling */
+        .btn {
+            border-radius: 12px;
+            font-weight: 500;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-success {
+            background: var(--success-gradient);
+            border: none;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        /* Modern Card Styling */
+        .card {
+            border-radius: var(--border-radius) !important;
+            border: 1px solid rgba(226, 232, 240, 0.5) !important;
+            box-shadow: var(--card-shadow) !important;
+            transition: var(--transition) !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+        }
+        
+        .card:hover {
+            box-shadow: var(--card-shadow-hover) !important;
+        }
+        
+        /* Progress Bar Styling */
+        .progress {
+            background: rgba(226, 232, 240, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            background: var(--success-gradient) !important;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Hero Section Enhancements */
+        .hero-section {
+            background: var(--primary-gradient);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(255,255,255,0.1) 1px, transparent 1px),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 1px, transparent 1px),
+                radial-gradient(circle at 40% 60%, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 50px 50px, 80px 80px, 60px 60px;
+            opacity: 0.4;
+            animation: float 6s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Bootstrap Navigation Sidebar -->
+    <nav class="position-fixed start-0 top-0 h-100 bg-white shadow-lg" id="sidebar" style="width: 280px; z-index: 1040;">
+        <!-- Header -->
+        <div class="bg-success text-white p-4">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="fs-2 me-3">🌿</div>
+                    <h2 class="h5 mb-0 fw-bold sidebar-text">Ayurveda AI</h2>
+                </div>
+                <button class="btn btn-outline-light btn-sm" onclick="toggleSidebarCollapse()" title="Collapse Menu">
+                    <span class="collapse-icon">⏪</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <div class="p-4">
+            <div class="nav nav-pills flex-column">
+                <a href="#home" class="nav-link d-flex align-items-center py-3 px-3 mb-2 text-dark rounded active" data-page="home">
+                    <span class="fs-5 me-3 nav-icon">🏠</span>
+                    <span class="sidebar-text">Home</span>
+                </a>
+                <a href="#assessment" class="nav-link d-flex align-items-center py-3 px-3 mb-2 text-dark rounded" data-page="assessment">
+                    <span class="fs-5 me-3 nav-icon">📊</span>
+                    <span class="sidebar-text">Assessment</span>
+                </a>
+                <a href="#diet-plan" class="nav-link d-flex align-items-center py-3 px-3 mb-2 text-dark rounded" data-page="diet-plan">
+                    <span class="fs-5 me-3 nav-icon">🍽️</span>
+                    <span class="sidebar-text">Diet Plan</span>
+                </a>
+                <a href="#lifestyle" class="nav-link d-flex align-items-center py-3 px-3 mb-2 text-dark rounded" data-page="lifestyle">
+                    <span class="fs-5 me-3 nav-icon">💡</span>
+                    <span class="sidebar-text">Lifestyle Tips</span>
+                </a>
+                <a href="#ai-assistant" class="nav-link d-flex align-items-center py-3 px-3 mb-2 text-dark rounded" data-page="ai-assistant">
+                    <span class="fs-5 me-3 nav-icon">🤖</span>
+                    <span class="sidebar-text">AI Assistant</span>
+                </a>
+                <a href="#progress" class="nav-link d-flex align-items-center py-3 px-3 mb-2 text-dark rounded" data-page="progress">
+                    <span class="fs-5 me-3 nav-icon">📈</span>
+                    <span class="sidebar-text">Progress</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Data Management Section -->
+        <div class="position-absolute bottom-0 start-0 end-0 p-3 bg-light border-top">
+            <div class="bg-white rounded p-3 shadow-sm">
+                <h6 class="text-muted mb-2 d-flex align-items-center">
+                    <span class="fs-6 me-2 nav-icon">💾</span>
+                    <span class="sidebar-text">Data Management</span>
+                </h6>
+                <div>
+                    <p id="data-status" class="small text-muted sidebar-text mb-2">No saved data yet</p>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-success btn-sm flex-fill" onclick="exportData()" title="Export Data">
+                            <span class="nav-icon">📤</span>
+                            <span class="sidebar-text ms-1">Export</span>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm flex-fill" onclick="clearData()" title="Clear Data">
+                            <span class="nav-icon">🗑️</span>
+                            <span class="sidebar-text ms-1">Clear</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Floating Sidebar Toggle Button -->
+    <button id="floating-toggle" onclick="toggleSidebarCollapse()" 
+            class="btn btn-success rounded-circle position-fixed shadow"
+            style="top: 20px; left: 20px; z-index: 9999; 
+                   width: 50px; height: 50px; display: none;"
+            title="Toggle Sidebar">
+        ☰
+    </button>
+
+    <!-- Main Content -->
+    <main class="min-vh-100" style="margin-left: 280px;">
+        <!-- Home Page -->
+        <div id="home-page" class="page active">
+            <!-- Modern Hero Section -->
+            <div class="hero-section text-white py-5 position-relative">
+                <!-- Floating Background Elements -->
+                <div class="position-absolute" style="top: 10%; left: 10%; opacity: 0.1;">
+                    <div class="bg-white rounded-circle animate-float" style="width: 100px; height: 100px;"></div>
+                </div>
+                <div class="position-absolute" style="top: 20%; right: 15%; opacity: 0.1;">
+                    <div class="bg-white rounded-circle animate-float" style="width: 60px; height: 60px; animation-delay: 1s;"></div>
+                </div>
+                <div class="position-absolute" style="bottom: 30%; left: 20%; opacity: 0.1;">
+                    <div class="bg-white rounded-circle animate-float" style="width: 80px; height: 80px; animation-delay: 2s;"></div>
+                </div>
+                
+                <div class="container position-relative" style="z-index: 10;">
+                    <div class="row justify-content-center text-center">
+                        <div class="col-lg-8 position-relative">
+                            <div class="display-1 mb-4 animate-float">🌿</div>
+                            <h1 class="display-3 fw-bold mb-4">
+                                <span class="d-block">Ayurvedic Prakriti</span>
+                                <span class="d-block text-warning animate-pulse">AI Advisor</span>
+                            </h1>
+                            <p class="lead mb-4">
+                                Discover your unique constitution and unlock personalized wellness insights through ancient Ayurvedic wisdom powered by modern AI
+                            </p>
+                            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center mb-4">
+                                <button onclick="navigateToPage('assessment')" class="btn btn-light btn-lg fw-semibold">
+                                    Start Assessment
+                                </button>
+                                <button onclick="navigateToPage('ai-assistant')" class="btn btn-outline-light btn-lg fw-semibold">
+                                    Try AI Assistant
+                                </button>
+                            </div>
+                            
+                            <!-- Enhanced Feature Badges -->
+                            <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+                                <span class="badge bg-light text-dark px-4 py-3 rounded-pill shadow-sm hover-lift" style="font-size: 0.9rem; font-weight: 500;">
+                                    Ancient Wisdom
+                                </span>
+                                <span class="badge bg-light text-dark px-4 py-3 rounded-pill shadow-sm hover-lift" style="font-size: 0.9rem; font-weight: 500;">
+                                    Modern AI
+                                </span>
+                                <span class="badge bg-light text-dark px-4 py-3 rounded-pill shadow-sm hover-lift" style="font-size: 0.9rem; font-weight: 500;">
+                                    Personal
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Features -->
+            <section class="py-5">
+                <div class="container">
+                    <div class="text-center mb-5">
+                        <h2 class="display-4 fw-bold text-dark mb-4">
+                            ✨ <span class="text-success">Key Features</span>
+                        </h2>
+                        <p class="lead text-muted">
+                            Experience the perfect blend of ancient wisdom and modern technology
+                        </p>
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm hover-lift">
+                                <div class="card-body text-center">
+                                    <div class="display-4 mb-3">✨</div>
+                                    <h5 class="card-title text-success">AI-Powered Analysis</h5>
+                                    <p class="card-text text-muted">Advanced machine learning algorithms for accurate constitution assessment</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm hover-lift">
+                                <div class="card-body text-center">
+                                    <div class="display-4 mb-3">🍃</div>
+                                    <h5 class="card-title text-success">Personalized Diet Plans</h5>
+                                    <p class="card-text text-muted">Customized nutrition recommendations based on your unique dosha</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm hover-lift">
+                                <div class="card-body text-center">
+                                    <div class="display-4 mb-3">🧘</div>
+                                    <h5 class="card-title text-success">Lifestyle Guidance</h5>
+                                    <p class="card-text text-muted">Holistic wellness practices tailored to your constitution</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- What You'll Discover -->
+            <section class="py-5 bg-light">
+                <div class="container">
+                    <div class="text-center mb-5">
+                        <h2 class="display-4 fw-bold text-dark mb-4">
+                            🌟 <span class="text-success">What You'll Discover</span>
+                        </h2>
+                        <p class="lead text-muted">
+                            Unlock the secrets of your unique constitution and transform your wellness journey
+                        </p>
+                    </div>
+                    
+                    <div class="row g-4">
+                        <!-- Assessment Card -->
+                        <div class="col-lg-4 col-md-6">
+                            <div class="card h-100 border-0 shadow hover-lift" onclick="navigateToPage('assessment')" style="cursor: pointer;">
+                                <div class="card-body text-center">
+                                    <div class="display-4 mb-3">🎯</div>
+                                    <h5 class="card-title">Your Unique Constitution</h5>
+                                    <p class="card-text text-muted">Discover your dominant dosha through our comprehensive AI-powered assessment</p>
+                                    <div class="d-flex align-items-center justify-content-center text-success fw-semibold">
+                                        <span>Start Assessment</span>
+                                        <i class="bi bi-arrow-right ms-2"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Diet Plan Card -->
+                        <div class="col-lg-4 col-md-6">
+                            <div class="card h-100 border-0 shadow hover-lift" onclick="navigateToPage('diet-plan')" style="cursor: pointer;">
+                                <div class="card-body text-center">
+                                    <div class="display-4 mb-3">🍽️</div>
+                                    <h5 class="card-title">Personalized Diet Plans</h5>
+                                    <p class="card-text text-muted">Get meal recommendations and nutrition guidance tailored to your body type</p>
+                                    <div class="d-flex align-items-center justify-content-center text-success fw-semibold">
+                                        <span>View Diet Plan</span>
+                                        <i class="bi bi-arrow-right ms-2"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Lifestyle Card -->
+                        <div class="col-lg-4 col-md-6">
+                            <div class="card h-100 border-0 shadow hover-lift" onclick="navigateToPage('lifestyle')" style="cursor: pointer;">
+                                <div class="card-body text-center">
+                                    <div class="display-4 mb-3">🧘</div>
+                                    <h5 class="card-title">Lifestyle Guidance</h5>
+                                    <p class="card-text text-muted">Holistic wellness practices and daily routines for optimal health</p>
+                                    <div class="d-flex align-items-center justify-content-center text-success fw-semibold">
+                                        <span>Explore Tips</span>
+                                        <i class="bi bi-arrow-right ms-2"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Assessment Page -->
+        <div id="assessment-page" class="page">
+            <div class="container py-5">
+                <!-- Assessment Header -->
+                <div class="text-center mb-5">
+                    <h1 class="display-4 fw-bold text-success mb-3">
+                        🎯 Prakriti Assessment
+                    </h1>
+                    <p class="lead text-muted mb-4">
+                        Discover your unique Ayurvedic constitution through our AI-powered assessment
+                    </p>
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <!-- Progress Bar -->
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted">Progress</span>
+                                        <span id="progress-text" class="fw-semibold text-success">0/15</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div id="progress-fill" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assessment Form -->
+                <form id="assessment-form" class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div id="questions-container">
+                            <!-- Questions will be generated here by JavaScript -->
+                        </div>
+                        
+                        <!-- ML Model Status -->
+                        <div class="text-center mb-4">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body py-3">
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="me-3">
+                                            <span id="model-status-icon" class="badge bg-success">🤖</span>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">AI Model Status:</small>
+                                            <div id="model-status-text" class="fw-semibold text-success">
+                                                Advanced ML Model Ready
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="text-center mt-4">
+                            <button type="button" onclick="processAssessment()" class="btn btn-success btn-lg px-5 py-3">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Get My Results with AI
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Results Section -->
+                <div id="results-section" style="display: none;" class="mt-5">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-10">
+                            <div id="results-content">
+                                <!-- Results will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diet Plan Page -->
+        <div id="diet-plan-page" class="page">
+            <div class="container py-5">
+                <!-- Diet Plan Header -->
+                <div class="text-center mb-5">
+                    <h1 class="display-4 fw-bold text-success mb-3">
+                        🍽️ Personalized Diet Plan
+                    </h1>
+                    <p class="lead text-muted">
+                        Discover foods that balance your unique Ayurvedic constitution
+                    </p>
+                </div>
+
+                <!-- Diet Content -->
+                <div id="diet-content">
+                    <!-- Default state - no assessment -->
+                    <div id="diet-no-assessment" class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <div class="card border-0 shadow-lg">
+                                <div class="card-body text-center py-5">
+                                    <div class="mb-4">
+                                        <i class="bi bi-clipboard-data display-1 text-muted"></i>
+                                    </div>
+                                    <h4 class="text-muted mb-3">Assessment Required</h4>
+                                    <p class="text-muted mb-4">
+                                        Complete your Prakriti assessment to unlock personalized diet recommendations 
+                                        tailored to your unique Ayurvedic constitution.
+                                    </p>
+                                    <button onclick="navigateToPage('assessment')" class="btn btn-success btn-lg">
+                                        <i class="bi bi-clipboard-check me-2"></i>Take Assessment Now
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diet recommendations will be loaded here -->
+                    <div id="diet-recommendations" style="display: none;">
+                        <!-- Content will be dynamically generated -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lifestyle Page -->
+        <div id="lifestyle-page" class="page">
+            <div class="container py-5">
+                <!-- Lifestyle Header -->
+                <div class="text-center mb-5">
+                    <h1 class="display-4 fw-bold text-success mb-3">
+                        💡 Lifestyle Recommendations
+                    </h1>
+                    <p class="lead text-muted">
+                        Ayurvedic daily routines and practices for optimal wellness
+                    </p>
+                </div>
+
+                <!-- Lifestyle Content -->
+                <div id="lifestyle-content">
+                    <!-- Default state - no assessment -->
+                    <div id="lifestyle-no-assessment" class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <div class="card border-0 shadow-lg">
+                                <div class="card-body text-center py-5">
+                                    <div class="mb-4">
+                                        <i class="bi bi-heart display-1 text-muted"></i>
+                                    </div>
+                                    <h4 class="text-muted mb-3">Personalized Guidance Awaits</h4>
+                                    <p class="text-muted mb-4">
+                                        Complete your Prakriti assessment to receive customized lifestyle recommendations 
+                                        including daily routines, exercise, and wellness practices for your dosha.
+                                    </p>
+                                    <button onclick="navigateToPage('assessment')" class="btn btn-success btn-lg">
+                                        <i class="bi bi-clipboard-check me-2"></i>Start Assessment
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lifestyle recommendations will be loaded here -->
+                    <div id="lifestyle-recommendations" style="display: none;">
+                        <!-- Content will be dynamically generated -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Assistant Page -->
+        <div id="ai-assistant-page" class="page">
+            <div class="container py-5">
+                <!-- AI Assistant Header -->
+                <div class="text-center mb-5">
+                    <h1 class="display-4 fw-bold text-success mb-3">
+                        🤖 AI Assistant
+                    </h1>
+                    <p class="lead text-muted">
+                        Get personalized Ayurvedic guidance powered by advanced AI
+                    </p>
+                </div>
+
+                <!-- AI Assistant Tabs -->
+                <div class="row justify-content-center mb-4">
+                    <div class="col-lg-8">
+                        <ul class="nav nav-pills nav-fill" id="ai-tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="chat-tab" data-bs-toggle="pill" data-bs-target="#chat-content" type="button" role="tab">
+                                    💬 Chat Assistant
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="symptoms-tab" data-bs-toggle="pill" data-bs-target="#symptoms-content" type="button" role="tab">
+                                    🩺 Symptom Analysis
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="insights-tab" data-bs-toggle="pill" data-bs-target="#insights-content" type="button" role="tab">
+                                    🎯 Personalized Insights
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="tab-content" id="ai-tab-content">
+                            <!-- Chat Assistant Tab -->
+                            <div class="tab-pane fade show active" id="chat-content" role="tabpanel">
+                                <!-- Chat Messages Card -->
+                                <div class="card border-0 shadow-lg mb-4">
+                                    <div class="card-header bg-success text-white">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">🤖</div>
+                                            <div>
+                                                <h6 class="mb-0">Ayurveda AI Assistant</h6>
+                                                <small class="opacity-75">Powered by Advanced ML Model</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body d-flex flex-column" style="height: 500px;">
+                                        <!-- Chat Messages Area -->
+                                        <div id="chat-messages" class="flex-grow-1 overflow-auto mb-3" style="max-height: 350px;">
+                                            <!-- Welcome Message -->
+                                            <div class="d-flex mb-3">
+                                                <div class="me-3">
+                                                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                        🤖
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="bg-light rounded-3 p-3">
+                                                        <p class="mb-2">
+                                                            <strong>Welcome!</strong> I'm your Ayurvedic AI Assistant. I can help you with:
+                                                        </p>
+                                                        <ul class="mb-2 small">
+                                                            <li>🎯 Understanding your dosha constitution</li>
+                                                            <li>🍽️ Personalized diet recommendations</li>
+                                                            <li>💡 Lifestyle and wellness tips</li>
+                                                            <li>🌿 Ayurvedic remedies and practices</li>
+                                                        </ul>
+                                                        <p class="mb-0 text-muted small">
+                                                            <em>How can I assist you today?</em>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Quick Action Buttons -->
+                                        <div class="mb-3">
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <button class="btn btn-outline-success btn-sm" onclick="sendQuickMessage('What is my dosha type?')">
+                                                    🎯 My Dosha Type
+                                                </button>
+                                                <button class="btn btn-outline-success btn-sm" onclick="sendQuickMessage('Give me diet recommendations')">
+                                                    🍽️ Diet Tips
+                                                </button>
+                                                <button class="btn btn-outline-success btn-sm" onclick="sendQuickMessage('What lifestyle changes should I make?')">
+                                                    💡 Lifestyle Tips
+                                                </button>
+                                                <button class="btn btn-outline-success btn-sm" onclick="sendQuickMessage('Help me with stress management')">
+                                                    🧘 Stress Relief
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Chat Input -->
+                                        <div class="d-flex gap-2">
+                                            <input type="text" id="chat-input" class="form-control" placeholder="Ask me anything about Ayurveda..." onkeypress="handleChatKeyPress(event)">
+                                            <button class="btn btn-success" onclick="sendChatMessage()">
+                                                <i class="bi bi-send"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- AI Status -->
+                                <div class="text-center">
+                                    <small class="text-muted">
+                                        <span id="ai-status" class="badge bg-success">🟢 AI Online</span>
+                                        Responses powered by advanced Ayurvedic knowledge base
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Symptom Analysis Tab -->
+                            <div class="tab-pane fade" id="symptoms-content" role="tabpanel">
+                                <div class="card border-0 shadow-lg">
+                                    <div class="card-header bg-primary text-white">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">🩺</div>
+                                            <div>
+                                                <h5 class="mb-0">Ayurvedic Symptom Analysis</h5>
+                                                <small class="opacity-75">AI-powered dosha imbalance detection</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="alert alert-info border-0 mb-4">
+                                            <div class="d-flex align-items-start">
+                                                <i class="bi bi-info-circle text-primary me-2 mt-1"></i>
+                                                <div>
+                                                    <strong>How it works:</strong> Describe your symptoms and our AI will analyze them from an Ayurvedic perspective, identifying potential dosha imbalances and providing natural recommendations.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <label for="symptoms-input" class="form-label fw-semibold">
+                                                <i class="bi bi-chat-text text-primary me-2"></i>Describe Your Symptoms
+                                            </label>
+                                            <textarea 
+                                                id="symptoms-input" 
+                                                class="form-control" 
+                                                rows="6" 
+                                                placeholder="Be as detailed as possible. For example: 'I've been feeling tired for the past week, having trouble sleeping, experiencing digestive issues after meals, and feeling more anxious than usual...'">
+                                            </textarea>
+                                            <div class="form-text">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-lightbulb me-1"></i>
+                                                    Tip: Include duration, intensity, and any patterns you've noticed for better analysis.
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-grid">
+                                            <button onclick="analyzeSymptoms()" class="btn btn-primary btn-lg">
+                                                <i class="bi bi-cpu me-2"></i>Analyze with AI
+                                            </button>
+                                        </div>
+                                        
+                                        <div id="symptoms-result" class="mt-4" style="display: none;">
+                                            <!-- Results will appear here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Personalized Insights Tab -->
+                            <div class="tab-pane fade" id="insights-content" role="tabpanel">
+                                <div class="card border-0 shadow-lg">
+                                    <div class="card-header bg-warning text-dark">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">🎯</div>
+                                            <div>
+                                                <h5 class="mb-0">Personalized Ayurvedic Insights</h5>
+                                                <small class="opacity-75">Deep analysis of your unique constitution</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="insights-container">
+                                            <div class="text-center py-5">
+                                                <div class="mb-4">
+                                                    <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                                        <i class="bi bi-person-check display-4 text-muted"></i>
+                                                    </div>
+                                                </div>
+                                                <h4 class="text-dark mb-3">Unlock Your Personalized Insights</h4>
+                                                <p class="text-muted mb-4 lead">
+                                                    Complete our comprehensive Prakriti assessment to receive:
+                                                </p>
+                                                <div class="row g-3 mb-4">
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center text-start">
+                                                            <i class="bi bi-check-circle text-success me-3 fs-5"></i>
+                                                            <span>Detailed dosha breakdown with percentages</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center text-start">
+                                                            <i class="bi bi-check-circle text-success me-3 fs-5"></i>
+                                                            <span>Personalized health recommendations</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center text-start">
+                                                            <i class="bi bi-check-circle text-success me-3 fs-5"></i>
+                                                            <span>Constitution-specific lifestyle guidance</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center text-start">
+                                                            <i class="bi bi-check-circle text-success me-3 fs-5"></i>
+                                                            <span>Balanced and imbalanced state analysis</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button onclick="navigateToPage('assessment')" class="btn btn-success btn-lg">
+                                                    <i class="bi bi-clipboard-check me-2"></i>Start Assessment Now
+                                                </button>
+                                                <p class="text-muted mt-3 small">
+                                                    <i class="bi bi-clock me-1"></i>Takes about 5-10 minutes to complete
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div id="insights-result" style="display: none;">
+                                            <!-- Personalized insights will appear here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Page -->
+        <div id="progress-page" class="page">
+            <div class="container py-5">
+                <h2 class="text-center mb-4">Your Progress</h2>
+                <div id="progress-content">
+                    <p class="text-center text-muted">Track your wellness journey and improvements over time.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Enhanced Dataset Model Scripts -->
+    <script src="prakriti_classifier.js"></script>
+    <script src="real_prakriti_model.js"></script>
+    <script src="advanced_prakriti_model.js"></script>
+    <script src="ayurvedic_feature_enhancer.js"></script>
+    <script src="enhanced_decision_tree.js"></script>
+    <script src="enhanced_dataset_model.js"></script>
+    <script src="assessment.js"></script>
+
+    <!-- Service worker registration. Production-only check avoids surprising local dev. -->
+    <script>
+        if ('serviceWorker' in navigator && location.protocol === 'https:') {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker
+                    .register('./service-worker.js')
+                    .catch((err) => console.warn('SW registration failed:', err));
+            });
+        }
+    </script>
+    
+    <!-- Disable conflicting navigation scripts -->
+    <script>
+        // Override conflicting functions from old scripts
+        window.showPageDirect = function(pageId) {
+            console.log('Redirecting old navigation to new system:', pageId);
+            if (pageId && pageId !== 'null') {
+                navigateToPage(pageId);
+            }
+        };
+        
+        // Prevent nav.js from interfering
+        window.addEventListener('DOMContentLoaded', function() {
+            // Remove any existing click handlers that might conflict
+            document.querySelectorAll('.nav-link').forEach(link => {
+                // Clone node to remove all event listeners
+                const newLink = link.cloneNode(true);
+                link.parentNode.replaceChild(newLink, link);
+            });
+            
+            // Re-add our clean navigation handlers
+            setupCleanNavigation();
+        });
+        
+        function setupCleanNavigation() {
+            document.querySelectorAll('.nav-link[data-page]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const pageId = this.getAttribute('data-page');
+                    console.log('Clean navigation to:', pageId);
+                    if (pageId && pageId !== 'null') {
+                        navigateToPage(pageId);
+                    }
+                    return false;
+                });
+            });
+        }
+    </script>
+    
+    <!-- Bootstrap JavaScript (pinned with SRI) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    
+    <script>
+        // Initialize assessment when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Generate assessment questions immediately
+            if (typeof generateAssessmentQuestions === 'function') {
+                generateAssessmentQuestions();
+            }
+            
+            // Single status check after page loads
+            setTimeout(() => {
+                checkMLModelStatus();
+                
+                // Optional: Check once more after 3 seconds for full dataset
+                setTimeout(checkMLModelStatus, 3000);
+            }, 100);
+            
+            // Set up progress tracking
+            if (typeof initializeProgressTracking === 'function') {
+                initializeProgressTracking();
+            }
+            
+            
+            // Add change listeners for progress tracking
+            document.addEventListener('change', function(e) {
+                if (e.target.type === 'radio' && e.target.name.startsWith('question_')) {
+                    if (typeof updateProgress === 'function') {
+                        updateProgress();
+                    }
+                }
+            });
+        });
+
+        // Check which ML model is available and display status
+        function checkMLModelStatus() {
+            try {
+                const statusIcon = document.getElementById('model-status-icon');
+                const statusText = document.getElementById('model-status-text');
+                
+                if (!statusIcon || !statusText) {
+                    console.warn('Model status elements not found');
+                    return;
+                }
+            
+                // Check for Enhanced Dataset Model (JavaScript - highest priority)
+                if (typeof enhancedDatasetPrakritiModel !== 'undefined' && enhancedDatasetPrakritiModel) {
+                    statusIcon.className = 'badge bg-success';
+                    statusIcon.textContent = '🚀';
+                    
+                    // Get dynamic model information
+                    const version = enhancedDatasetPrakritiModel.version || '3.1.0';
+                    const csvLoaded = enhancedDatasetPrakritiModel.csvDataLoaded || false;
+                    const csvSamples = enhancedDatasetPrakritiModel.csvDataset?.length || 5001;
+                    const syntheticSamples = enhancedDatasetPrakritiModel.expandedDataset?.length || 250;
+                    const totalSamples = csvSamples + syntheticSamples;
+                    
+                    const statusMessage = csvLoaded 
+                        ? `${totalSamples} training samples • ${csvSamples} real CSV + ${syntheticSamples} synthetic • Dr. Kulkarni's insights integrated`
+                        : `${totalSamples} training samples • Synthetic data (CSV loading...)`;
+                    
+                    statusText.innerHTML = `
+                        <span class="text-success">Enhanced Dataset Model v${version}</span><br>
+                        <small class="text-muted">${statusMessage}</small>
+                    `;
+                    console.log('✅ Enhanced Dataset Prakriti Model detected and ready');
+                    
+                } else if (typeof advancedPrakritiModel !== 'undefined' && advancedPrakritiModel) {
+                    statusIcon.className = 'badge bg-warning';
+                    statusIcon.textContent = '⚡';
+                    statusText.innerHTML = `
+                        <span class="text-warning">Advanced ML Model v2.0</span><br>
+                        <small class="text-muted">200+ training samples • Ensemble algorithms</small>
+                    `;
+                    console.log('⚠️ Using Advanced Prakriti Model (fallback)');
+                    
+                } else if (typeof prakritiModel !== 'undefined' && prakritiModel) {
+                    statusIcon.className = 'badge bg-secondary';
+                    statusIcon.textContent = '🤖';
+                    statusText.innerHTML = `
+                        <span class="text-secondary">Basic ML Model</span><br>
+                        <small class="text-muted">Standard algorithm</small>
+                    `;
+                    console.log('⚠️ Using basic Prakriti model');
+                } else {
+                    statusIcon.className = 'badge bg-danger';
+                    statusIcon.textContent = '❌';
+                    statusText.innerHTML = `
+                        <span class="text-danger">No ML Model</span><br>
+                        <small class="text-muted">Fallback calculation only</small>
+                    `;
+                    console.log('❌ No ML model detected');
+                }
+            } catch (error) {
+                console.error('Error checking ML model status:', error);
+            }
+        }
+
+        // AI Assistant Functions
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (message) {
+                addUserMessage(message);
+                input.value = '';
+                
+                // Show typing indicator
+                showTypingIndicator();
+                
+                // Simulate AI response (replace with actual AI call)
+                setTimeout(() => {
+                    hideTypingIndicator();
+                    generateAIResponse(message);
+                }, 1500);
+            }
+        }
+
+        function sendQuickMessage(message) {
+            document.getElementById('chat-input').value = message;
+            sendChatMessage();
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        function addUserMessage(message) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'd-flex mb-3 justify-content-end';
+            
+            messageDiv.innerHTML = `
+                <div class="flex-grow-1" style="max-width: 70%;">
+                    <div class="bg-success text-white rounded-3 p-3">
+                        <p class="mb-0">${message}</p>
+                    </div>
+                </div>
+                <div class="ms-3">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        👤
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addAIMessage(message) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'd-flex mb-3';
+            
+            messageDiv.innerHTML = `
+                <div class="me-3">
+                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        🤖
+                    </div>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="bg-light rounded-3 p-3">
+                        <p class="mb-0">${message}</p>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const chatMessages = document.getElementById('chat-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'd-flex mb-3';
+            
+            typingDiv.innerHTML = `
+                <div class="me-3">
+                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        🤖
+                    </div>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="bg-light rounded-3 p-3">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm text-success me-2" role="status"></div>
+                            <small class="text-muted">AI is thinking...</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        function generateAIResponse(userMessage) {
+            // Get user's assessment data if available
+            const userData = getUserData();
+            
+            // Generate contextual response based on user message and data
+            let response = getAIResponse(userMessage, userData);
+            
+            addAIMessage(response);
+        }
+
+        function getUserData() {
+            try {
+                const data = localStorage.getItem('ayurvedic_prakriti_data');
+                return data ? JSON.parse(data) : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function getAIResponse(message, userData) {
+            const lowerMessage = message.toLowerCase();
+            
+            // Check if user has assessment data
+            const hasAssessment = userData && userData.currentUser && userData.currentUser.primary_dosha;
+            const dosha = hasAssessment ? userData.currentUser.primary_dosha : null;
+            
+            // Generate contextual responses
+            if (lowerMessage.includes('dosha') || lowerMessage.includes('constitution')) {
+                if (hasAssessment) {
+                    return `Based on your assessment, your primary dosha is <strong>${dosha.charAt(0).toUpperCase() + dosha.slice(1)}</strong>. This means you have characteristics of ${getDoshaDescription(dosha)}. Would you like specific recommendations for your dosha type?`;
+                } else {
+                    return `To determine your dosha constitution, I recommend taking our comprehensive assessment first. Click on "Assessment" in the sidebar to discover your unique Ayurvedic type. Once completed, I can provide personalized guidance!`;
+                }
+            }
+            
+            if (lowerMessage.includes('diet') || lowerMessage.includes('food') || lowerMessage.includes('nutrition')) {
+                if (hasAssessment) {
+                    return getDietRecommendations(dosha);
+                } else {
+                    return `For personalized diet recommendations, please complete your Prakriti assessment first. Generally, Ayurveda emphasizes eating fresh, seasonal foods and maintaining regular meal times. After your assessment, I can provide specific dietary guidance for your constitution.`;
+                }
+            }
+            
+            if (lowerMessage.includes('lifestyle') || lowerMessage.includes('routine') || lowerMessage.includes('daily')) {
+                if (hasAssessment) {
+                    return getLifestyleRecommendations(dosha);
+                } else {
+                    return `Ayurvedic lifestyle focuses on creating daily routines that support your unique constitution. Key principles include regular sleep patterns, mindful eating, and stress management. Complete your assessment for personalized lifestyle recommendations!`;
+                }
+            }
+            
+            if (lowerMessage.includes('stress') || lowerMessage.includes('anxiety') || lowerMessage.includes('calm')) {
+                return `For stress management, Ayurveda recommends: 🧘 Regular meditation (even 5-10 minutes daily), 🌿 Herbal teas like chamomile or ashwagandha, 💨 Deep breathing exercises (pranayama), 🛁 Warm oil massage (abhyanga), 🌅 Consistent sleep schedule. Which of these would you like to explore further?`;
+            }
+            
+            // Default response
+            return `Thank you for your question! I'm here to help with Ayurvedic guidance. I can assist with understanding doshas, diet recommendations, lifestyle tips, and wellness practices. ${hasAssessment ? 'Since you\'ve completed your assessment, I can provide personalized advice!' : 'Consider taking our assessment for personalized recommendations.'} What specific aspect of Ayurveda interests you most?`;
+        }
+
+        function getDoshaDescription(dosha) {
+            const descriptions = {
+                vata: 'air and space elements, governing movement and creativity. You likely have a quick mind, variable energy, and benefit from grounding practices',
+                pitta: 'fire and water elements, governing transformation and metabolism. You likely have strong digestion, leadership qualities, and benefit from cooling practices',
+                kapha: 'earth and water elements, governing structure and stability. You likely have steady energy, strong immunity, and benefit from energizing practices'
+            };
+            return descriptions[dosha] || 'a unique constitution';
+        }
+
+        function getDietRecommendations(dosha) {
+            const recommendations = {
+                vata: `For your Vata constitution, focus on: 🍲 Warm, cooked foods and soups, 🥛 Warm drinks and herbal teas, 🥑 Healthy fats like ghee and avocado, 🍠 Sweet, sour, and salty tastes, ⏰ Regular meal times. Avoid cold, dry, or raw foods.`,
+                pitta: `For your Pitta constitution, focus on: 🥒 Cool, fresh foods and salads, 🥥 Coconut water and cooling drinks, 🌿 Sweet, bitter, and astringent tastes, 🥬 Leafy greens and fresh fruits, 🧊 Room temperature or cool foods. Avoid spicy, oily, or very hot foods.`,
+                kapha: `For your Kapha constitution, focus on: 🌶️ Warm, spicy foods and teas, 🥗 Light, dry foods and salads, 🫚 Ginger and warming spices, 🌽 Pungent, bitter, and astringent tastes, 🍵 Herbal teas instead of dairy. Avoid heavy, oily, or sweet foods.`
+            };
+            return recommendations[dosha] || 'Please complete your assessment for personalized diet recommendations.';
+        }
+
+        function getLifestyleRecommendations(dosha) {
+            const recommendations = {
+                vata: `For your Vata constitution: 🌅 Regular sleep schedule (10 PM - 6 AM), 🧘 Daily meditation and gentle yoga, 🛁 Warm oil massage (abhyanga), 🏠 Create calm, warm environments, 📱 Limit screen time before bed, 🎵 Calming music and activities.`,
+                pitta: `For your Pitta constitution: ❄️ Stay cool and avoid overheating, 🌙 Moderate exercise, avoid intense workouts in heat, 🧘 Cooling pranayama and meditation, 🌊 Spend time near water, 🌳 Avoid excessive competition, 😌 Practice patience and relaxation.`,
+                kapha: `For your Kapha constitution: 🏃 Regular vigorous exercise, 🌅 Wake up early (before 6 AM), 🔥 Energizing activities and challenges, ☀️ Seek warmth and sunlight, 🎯 Set goals and stay motivated, 🧘 Stimulating yoga and breathwork.`
+            };
+            return recommendations[dosha] || 'Please complete your assessment for personalized lifestyle recommendations.';
+        }
+
+        // Symptom Analysis Functions
+        function analyzeSymptoms() {
+            const symptomsInput = document.getElementById('symptoms-input');
+            const symptomsResult = document.getElementById('symptoms-result');
+            
+            const symptoms = symptomsInput.value.trim();
+            if (!symptoms) {
+                alert('Please describe your symptoms first.');
+                return;
+            }
+            
+            // Show loading state
+            symptomsResult.style.display = 'block';
+            symptomsResult.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary me-2" role="status"></div>
+                    <span>Analyzing your symptoms...</span>
+                </div>
+            `;
+            
+            // Simulate analysis delay
+            setTimeout(() => {
+                const userData = getUserData();
+                const analysis = getSymptomAnalysis(symptoms, userData);
+                
+                symptomsResult.innerHTML = `
+                    <div class="alert alert-info border-0 shadow-sm">
+                        <h6 class="alert-heading">🩺 Ayurvedic Analysis</h6>
+                        <div>${analysis}</div>
+                    </div>
+                `;
+            }, 2000);
+        }
+
+        function getSymptomAnalysis(symptoms, userData) {
+            const lowerSymptoms = symptoms.toLowerCase();
+            const hasAssessment = userData && userData.currentUser && userData.currentUser.primary_dosha;
+            const dosha = hasAssessment ? userData.currentUser.primary_dosha : null;
+            
+            let analysis = '<div class="mb-3">';
+            
+            // Analyze common symptoms
+            if (lowerSymptoms.includes('tired') || lowerSymptoms.includes('fatigue') || lowerSymptoms.includes('exhausted')) {
+                analysis += `
+                    <div class="mb-3">
+                        <strong>🔋 Fatigue/Tiredness:</strong><br>
+                        This may indicate a <strong>Kapha imbalance</strong>. Recommendations:
+                        <ul class="mt-2">
+                            <li>🌶️ Include warming spices (ginger, black pepper, cinnamon)</li>
+                            <li>🏃 Engage in energizing exercise, especially in the morning</li>
+                            <li>☀️ Get sunlight exposure and avoid daytime naps</li>
+                            <li>🥗 Eat lighter, less oily foods</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            if (lowerSymptoms.includes('stress') || lowerSymptoms.includes('anxiety') || lowerSymptoms.includes('worried')) {
+                analysis += `
+                    <div class="mb-3">
+                        <strong>😰 Stress/Anxiety:</strong><br>
+                        This typically relates to <strong>Vata imbalance</strong>. Recommendations:
+                        <ul class="mt-2">
+                            <li>🧘 Practice regular meditation and deep breathing</li>
+                            <li>🛁 Try warm oil massage (abhyanga)</li>
+                            <li>🍲 Eat warm, grounding foods at regular times</li>
+                            <li>😴 Maintain consistent sleep schedule</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            if (lowerSymptoms.includes('digestive') || lowerSymptoms.includes('stomach') || lowerSymptoms.includes('bloating') || lowerSymptoms.includes('gas')) {
+                analysis += `
+                    <div class="mb-3">
+                        <strong>🍽️ Digestive Issues:</strong><br>
+                        Digestive problems can affect all doshas. General recommendations:
+                        <ul class="mt-2">
+                            <li>🌿 Use digestive spices: cumin, coriander, fennel</li>
+                            <li>💧 Drink warm water throughout the day</li>
+                            <li>⏰ Eat at regular times and avoid overeating</li>
+                            <li>🚶 Take a gentle walk after meals</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            if (lowerSymptoms.includes('headache') || lowerSymptoms.includes('migraine')) {
+                analysis += `
+                    <div class="mb-3">
+                        <strong>🤕 Headaches:</strong><br>
+                        Often related to <strong>Pitta imbalance</strong>. Recommendations:
+                        <ul class="mt-2">
+                            <li>❄️ Apply cooling treatments (cool compress)</li>
+                            <li>🥒 Eat cooling foods (cucumber, coconut water)</li>
+                            <li>🌙 Avoid excessive heat and sun exposure</li>
+                            <li>😌 Practice stress reduction techniques</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            if (lowerSymptoms.includes('sleep') || lowerSymptoms.includes('insomnia')) {
+                analysis += `
+                    <div class="mb-3">
+                        <strong>😴 Sleep Issues:</strong><br>
+                        Usually indicates <strong>Vata imbalance</strong>. Recommendations:
+                        <ul class="mt-2">
+                            <li>🛁 Warm bath or foot soak before bed</li>
+                            <li>🥛 Warm milk with nutmeg or chamomile tea</li>
+                            <li>📱 Avoid screens 1 hour before sleep</li>
+                            <li>🕙 Consistent bedtime routine (ideally by 10 PM)</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            analysis += '</div>';
+            
+            // Add personalized note if user has assessment data
+            if (hasAssessment) {
+                analysis += `
+                    <div class="alert alert-success border-0 mt-3">
+                        <strong>📊 Personalized Note:</strong> Based on your assessment, your primary dosha is <strong>${dosha.charAt(0).toUpperCase() + dosha.slice(1)}</strong>. 
+                        The recommendations above are tailored considering your constitution.
+                    </div>
+                `;
+            } else {
+                analysis += `
+                    <div class="alert alert-warning border-0 mt-3">
+                        <strong>💡 Tip:</strong> For more personalized symptom analysis, consider taking our 
+                        <a href="#" onclick="navigateToPage('assessment')" class="alert-link">Prakriti Assessment</a> 
+                        to understand your unique constitution.
+                    </div>
+                `;
+            }
+            
+            return analysis;
+        }
+
+        // Insights Functions
+        function generateInsights() {
+            const userData = getUserData();
+            const insightsContainer = document.getElementById('insights-container');
+            const insightsResult = document.getElementById('insights-result');
+            
+            if (!userData || !userData.currentUser || !userData.currentUser.primary_dosha) {
+                // Show assessment prompt
+                insightsContainer.style.display = 'block';
+                insightsResult.style.display = 'none';
+                return;
+            }
+            
+            // Hide prompt and show insights
+            insightsContainer.style.display = 'none';
+            insightsResult.style.display = 'block';
+            
+            const user = userData.currentUser;
+            const dosha = user.primary_dosha;
+            const percentages = user.dosha_percentages;
+            
+            insightsResult.innerHTML = `
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="alert alert-success border-0">
+                            <h6 class="alert-heading">🎯 Your Ayurvedic Profile</h6>
+                            <p class="mb-0">Primary Constitution: <strong>${dosha.charAt(0).toUpperCase() + dosha.slice(1)}</strong></p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-success">Vata</h6>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-info" style="width: ${percentages?.vata || 0}%"></div>
+                                </div>
+                                <small>${percentages?.vata || 0}%</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-success">Pitta</h6>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: ${percentages?.pitta || 0}%"></div>
+                                </div>
+                                <small>${percentages?.pitta || 0}%</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-success">Kapha</h6>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: ${percentages?.kapha || 0}%"></div>
+                                </div>
+                                <small>${percentages?.kapha || 0}%</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12">
+                        ${getPersonalizedInsights(dosha)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getPersonalizedInsights(dosha) {
+            const insights = {
+                vata: `
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary">🌪️ Your Vata Constitution</h6>
+                            <p><strong>Characteristics:</strong> Creative, energetic, quick-thinking, adaptable</p>
+                            <p><strong>When Balanced:</strong> Enthusiastic, flexible, good communication</p>
+                            <p><strong>When Imbalanced:</strong> Anxiety, restlessness, irregular digestion</p>
+                            
+                            <h6 class="mt-4">🎯 Personalized Recommendations:</h6>
+                            <ul>
+                                <li><strong>Diet:</strong> Warm, cooked foods; regular meal times; sweet, sour, salty tastes</li>
+                                <li><strong>Lifestyle:</strong> Regular routines; oil massage; gentle exercise</li>
+                                <li><strong>Best Times:</strong> Early morning meditation; consistent sleep by 10 PM</li>
+                                <li><strong>Avoid:</strong> Cold foods, irregular schedules, excessive stimulation</li>
+                            </ul>
+                        </div>
+                    </div>
+                `,
+                pitta: `
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title text-warning">🔥 Your Pitta Constitution</h6>
+                            <p><strong>Characteristics:</strong> Intelligent, focused, natural leader, strong digestion</p>
+                            <p><strong>When Balanced:</strong> Sharp intellect, good decision-making, strong metabolism</p>
+                            <p><strong>When Imbalanced:</strong> Irritability, inflammation, excessive heat</p>
+                            
+                            <h6 class="mt-4">🎯 Personalized Recommendations:</h6>
+                            <ul>
+                                <li><strong>Diet:</strong> Cool, fresh foods; sweet, bitter, astringent tastes; avoid spicy</li>
+                                <li><strong>Lifestyle:</strong> Moderate exercise; cooling practices; avoid overheating</li>
+                                <li><strong>Best Times:</strong> Exercise in cooler hours; practice patience</li>
+                                <li><strong>Avoid:</strong> Excessive heat, competitive stress, skipping meals</li>
+                            </ul>
+                        </div>
+                    </div>
+                `,
+                kapha: `
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title text-success">🌍 Your Kapha Constitution</h6>
+                            <p><strong>Characteristics:</strong> Stable, calm, strong immunity, loyal</p>
+                            <p><strong>When Balanced:</strong> Steady energy, good endurance, emotional stability</p>
+                            <p><strong>When Imbalanced:</strong> Sluggishness, weight gain, congestion</p>
+                            
+                            <h6 class="mt-4">🎯 Personalized Recommendations:</h6>
+                            <ul>
+                                <li><strong>Diet:</strong> Light, warm foods; pungent, bitter, astringent tastes; limit dairy</li>
+                                <li><strong>Lifestyle:</strong> Vigorous exercise; early rising; stimulating activities</li>
+                                <li><strong>Best Times:</strong> Morning workouts; avoid daytime naps</li>
+                                <li><strong>Avoid:</strong> Heavy, oily foods; excessive sitting; cold, damp environments</li>
+                            </ul>
+                        </div>
+                    </div>
+                `
+            };
+            
+            return insights[dosha] || '<p>Complete your assessment for personalized insights.</p>';
+        }
+
+        // Complete Lifestyle Planning System Functions
+        function generateExercisePlan(dosha) {
+            const lifestylePlanDisplay = document.getElementById('lifestyle-plan-display');
+            if (!lifestylePlanDisplay) return;
+
+            const exercisePlans = {
+                vata: {
+                    morning: "🌅 Gentle yoga or stretching (20-30 min)",
+                    afternoon: "🚶 Peaceful walk in nature (15-20 min)",
+                    evening: "🧘 Restorative yoga or meditation (15 min)",
+                    weekly: [
+                        "Monday: Gentle Hatha Yoga (45 min)",
+                        "Tuesday: Walking or light swimming (30 min)",
+                        "Wednesday: Tai Chi or Qigong (30 min)",
+                        "Thursday: Gentle strength training (20 min)",
+                        "Friday: Dance or rhythmic movement (30 min)",
+                        "Saturday: Nature walk or hiking (45 min)",
+                        "Sunday: Rest or gentle stretching (15 min)"
+                    ],
+                    tips: [
+                        "Keep exercises gentle and grounding",
+                        "Avoid excessive cardio or intense workouts",
+                        "Focus on consistency over intensity",
+                        "Exercise in warm environments when possible"
+                    ]
+                },
+                pitta: {
+                    morning: "🏊 Swimming or moderate cardio (30 min)",
+                    afternoon: "🚴 Cycling or brisk walk (20-25 min)",
+                    evening: "🧘 Cooling yoga or meditation (20 min)",
+                    weekly: [
+                        "Monday: Swimming (45 min)",
+                        "Tuesday: Moderate strength training (30 min)",
+                        "Wednesday: Cycling or jogging (35 min)",
+                        "Thursday: Yoga flow (45 min)",
+                        "Friday: Team sports (moderate intensity)",
+                        "Saturday: Hiking or outdoor activities (60 min)",
+                        "Sunday: Gentle yoga or rest"
+                    ],
+                    tips: [
+                        "Exercise during cooler parts of the day",
+                        "Avoid competitive or aggressive activities",
+                        "Stay hydrated and cool during workouts",
+                        "Practice patience and avoid overexertion"
+                    ]
+                },
+                kapha: {
+                    morning: "🏃 Vigorous cardio or running (45 min)",
+                    afternoon: "💪 Strength training or HIIT (30 min)",
+                    evening: "🧘 Energizing yoga or breathwork (20 min)",
+                    weekly: [
+                        "Monday: High-intensity cardio (45 min)",
+                        "Tuesday: Weight training (45 min)",
+                        "Wednesday: Running or cycling (40 min)",
+                        "Thursday: Power yoga or Ashtanga (45 min)",
+                        "Friday: Team sports or martial arts",
+                        "Saturday: Long hike or outdoor adventure (90 min)",
+                        "Sunday: Active recovery - dynamic yoga (30 min)"
+                    ],
+                    tips: [
+                        "Engage in vigorous, energizing exercises",
+                        "Challenge yourself with new activities",
+                        "Exercise regularly to maintain motivation",
+                        "Avoid excessive rest or sedentary time"
+                    ]
+                }
+            };
+
+            const plan = exercisePlans[dosha];
+            
+            lifestylePlanDisplay.style.display = 'block';
+            lifestylePlanDisplay.innerHTML = `
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">💪 Exercise Plan for ${dosha.charAt(0).toUpperCase() + dosha.slice(1)}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded">
+                                    <h6 class="text-success mb-2">🌅 Morning</h6>
+                                    <p class="mb-0 small">${plan.morning}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded">
+                                    <h6 class="text-warning mb-2">☀️ Afternoon</h6>
+                                    <p class="mb-0 small">${plan.afternoon}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded">
+                                    <h6 class="text-info mb-2">🌙 Evening</h6>
+                                    <p class="mb-0 small">${plan.evening}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-8">
+                                <h6 class="text-primary mb-3">📅 Weekly Schedule</h6>
+                                <ul class="list-unstyled">
+                                    ${plan.weekly.map(day => `<li class="mb-1"><small>• ${day}</small></li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="text-success mb-3">💡 Exercise Tips</h6>
+                                <ul class="list-unstyled">
+                                    ${plan.tips.map(tip => `<li class="mb-2"><small><i class="bi bi-check-circle text-success me-1"></i>${tip}</small></li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateDailyRoutine(dosha) {
+            const lifestylePlanDisplay = document.getElementById('lifestyle-plan-display');
+            if (!lifestylePlanDisplay) return;
+
+            const dailyRoutines = {
+                vata: {
+                    "5:30-6:30 AM": "🌅 Wake up gently, avoid alarms if possible",
+                    "6:30-7:00 AM": "🛁 Warm oil massage (abhyanga) and shower",
+                    "7:00-7:30 AM": "🧘 Meditation and gentle stretching",
+                    "7:30-8:30 AM": "🍲 Warm, nourishing breakfast",
+                    "12:00-1:00 PM": "🍛 Substantial, warm lunch (largest meal)",
+                    "3:00-3:30 PM": "🍵 Warm herbal tea and light snack",
+                    "6:00-7:00 PM": "🍲 Light, warm dinner",
+                    "8:00-9:00 PM": "📚 Calming activities (reading, music)",
+                    "9:00-10:00 PM": "🛁 Warm bath or foot soak",
+                    "10:00 PM": "😴 Sleep (aim for 8-9 hours)"
+                },
+                pitta: {
+                    "5:30-6:00 AM": "🌅 Wake up early before sunrise",
+                    "6:00-6:30 AM": "🏊 Exercise in cool morning air",
+                    "6:30-7:00 AM": "🚿 Cool shower and self-care",
+                    "7:00-8:00 AM": "🥣 Cool, fresh breakfast",
+                    "12:00-1:00 PM": "🥗 Fresh, substantial lunch",
+                    "3:00-3:30 PM": "🥥 Coconut water or cooling drink",
+                    "6:00-7:00 PM": "🍚 Light, cooling dinner",
+                    "7:00-8:00 PM": "🌙 Cooling activities, avoid screens",
+                    "8:00-9:00 PM": "🧘 Meditation or gentle yoga",
+                    "10:00 PM": "😴 Sleep in cool, dark room"
+                },
+                kapha: {
+                    "5:00-5:30 AM": "🌅 Wake up early, no snoozing",
+                    "5:30-6:30 AM": "🏃 Vigorous exercise or yoga",
+                    "6:30-7:00 AM": "🚿 Energizing shower",
+                    "7:00-7:30 AM": "🍵 Light breakfast or herbal tea",
+                    "12:00-1:00 PM": "🌶️ Spicy, substantial lunch",
+                    "3:00 PM": "🫚 Ginger tea (avoid heavy snacks)",
+                    "6:00-6:30 PM": "🥗 Very light dinner",
+                    "7:00-8:00 PM": "🎯 Stimulating activities or hobbies",
+                    "8:00-9:00 PM": "📚 Reading or planning next day",
+                    "9:30 PM": "😴 Early sleep (7-8 hours maximum)"
+                }
+            };
+
+            const routine = dailyRoutines[dosha];
+            
+            lifestylePlanDisplay.style.display = 'block';
+            lifestylePlanDisplay.innerHTML = `
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">🌅 Daily Routine for ${dosha.charAt(0).toUpperCase() + dosha.slice(1)}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            ${Object.entries(routine).map(([time, activity]) => `
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-start p-2 bg-light rounded">
+                                        <div class="badge bg-primary me-3 mt-1" style="min-width: 80px; font-size: 0.7rem;">${time}</div>
+                                        <small class="flex-grow-1">${activity}</small>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <strong>💡 Routine Tip:</strong> Consistency is key in Ayurveda. Try to follow this routine for at least 21 days to establish healthy patterns.
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateStressManagement(dosha) {
+            const lifestylePlanDisplay = document.getElementById('lifestyle-plan-display');
+            if (!lifestylePlanDisplay) return;
+
+            const stressManagement = {
+                vata: {
+                    techniques: [
+                        "🧘 Daily meditation (10-20 minutes)",
+                        "💨 Deep breathing exercises (Nadi Shodhana)",
+                        "🛁 Warm oil massage before bed",
+                        "🎵 Calming music or nature sounds",
+                        "📝 Journaling thoughts and worries",
+                        "🌿 Aromatherapy with lavender or sandalwood"
+                    ],
+                    emergency: [
+                        "Take 10 deep breaths slowly",
+                        "Place hands on heart and breathe",
+                        "Drink warm herbal tea",
+                        "Call a supportive friend",
+                        "Take a warm bath or shower"
+                    ],
+                    lifestyle: [
+                        "Maintain regular daily routines",
+                        "Limit caffeine and stimulants",
+                        "Create a calm, organized environment",
+                        "Practice saying 'no' to overcommitment"
+                    ]
+                },
+                pitta: {
+                    techniques: [
+                        "😌 Cooling pranayama (Sheetali, Sheetkari)",
+                        "🌊 Meditation near water or nature",
+                        "🧊 Cool compresses on forehead",
+                        "🌙 Moon gazing or stargazing",
+                        "🎨 Creative activities (art, music)",
+                        "💚 Practice forgiveness and letting go"
+                    ],
+                    emergency: [
+                        "Step away from the situation",
+                        "Splash cool water on face",
+                        "Count to 10 before responding",
+                        "Take a walk in fresh air",
+                        "Practice the 4-7-8 breathing technique"
+                    ],
+                    lifestyle: [
+                        "Avoid competitive or aggressive activities",
+                        "Take regular breaks from work",
+                        "Practice patience and tolerance",
+                        "Spend time in cool, peaceful environments"
+                    ]
+                },
+                kapha: {
+                    techniques: [
+                        "🔥 Energizing pranayama (Bhastrika, Kapalabhati)",
+                        "🎯 Goal-setting and achievement planning",
+                        "🏃 Physical exercise to release tension",
+                        "☀️ Sunlight exposure and vitamin D",
+                        "🎪 Social activities and group events",
+                        "🌶️ Stimulating activities and challenges"
+                    ],
+                    emergency: [
+                        "Do 10 jumping jacks or push-ups",
+                        "Step outside for fresh air and sunlight",
+                        "Listen to upbeat, energizing music",
+                        "Call an energetic, positive friend",
+                        "Change your environment immediately"
+                    ],
+                    lifestyle: [
+                        "Maintain active social connections",
+                        "Set challenging but achievable goals",
+                        "Avoid excessive comfort and routine",
+                        "Engage in stimulating mental activities"
+                    ]
+                }
+            };
+
+            const plan = stressManagement[dosha];
+            
+            lifestylePlanDisplay.style.display = 'block';
+            lifestylePlanDisplay.innerHTML = `
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">🧘 Stress Management for ${dosha.charAt(0).toUpperCase() + dosha.slice(1)}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <h6 class="text-primary mb-3">🛠️ Daily Techniques</h6>
+                                <ul class="list-unstyled">
+                                    ${plan.techniques.map(technique => `<li class="mb-2"><small>${technique}</small></li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="text-danger mb-3">🚨 Emergency Relief</h6>
+                                <ul class="list-unstyled">
+                                    ${plan.emergency.map(emergency => `<li class="mb-2"><small><i class="bi bi-exclamation-circle text-danger me-1"></i>${emergency}</small></li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="text-success mb-3">🌱 Lifestyle Changes</h6>
+                                <ul class="list-unstyled">
+                                    ${plan.lifestyle.map(lifestyle => `<li class="mb-2"><small><i class="bi bi-check-circle text-success me-1"></i>${lifestyle}</small></li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateSleepOptimization(dosha) {
+            const lifestylePlanDisplay = document.getElementById('lifestyle-plan-display');
+            if (!lifestylePlanDisplay) return;
+
+            const sleepOptimization = {
+                vata: {
+                    bedtime: "9:30-10:00 PM",
+                    waketime: "6:00-6:30 AM",
+                    duration: "8-9 hours",
+                    preparation: [
+                        "🛁 Warm bath with lavender oil",
+                        "🦶 Foot massage with warm sesame oil",
+                        "🥛 Warm milk with nutmeg and cardamom",
+                        "📚 Read calming books or poetry",
+                        "🧘 Gentle meditation or prayer"
+                    ],
+                    environment: [
+                        "Keep bedroom warm and cozy",
+                        "Use soft, comfortable bedding",
+                        "Minimize noise and distractions",
+                        "Use warm, dim lighting before bed"
+                    ],
+                    avoid: [
+                        "Screen time 1 hour before bed",
+                        "Stimulating conversations",
+                        "Cold foods or drinks",
+                        "Intense physical activity"
+                    ]
+                },
+                pitta: {
+                    bedtime: "10:00-10:30 PM",
+                    waketime: "5:30-6:00 AM",
+                    duration: "7-8 hours",
+                    preparation: [
+                        "🌙 Cool shower or bath",
+                        "🥥 Coconut oil massage on feet",
+                        "🍃 Cooling herbal tea (chamomile, mint)",
+                        "🧘 Meditation with cooling visualization",
+                        "📖 Read spiritual or calming texts"
+                    ],
+                    environment: [
+                        "Keep bedroom cool and well-ventilated",
+                        "Use breathable, natural fabrics",
+                        "Block out all light sources",
+                        "Maintain quiet, peaceful atmosphere"
+                    ],
+                    avoid: [
+                        "Heated discussions or arguments",
+                        "Spicy or heavy foods before bed",
+                        "Excessive mental stimulation",
+                        "Competitive activities in evening"
+                    ]
+                },
+                kapha: {
+                    bedtime: "9:30-10:00 PM",
+                    waketime: "5:00-5:30 AM",
+                    duration: "6-7 hours",
+                    preparation: [
+                        "🫚 Ginger tea or warm water with lemon",
+                        "📝 Plan next day's activities",
+                        "🧘 Energizing pranayama (light practice)",
+                        "📚 Read motivational or inspiring content",
+                        "🎯 Set intentions for tomorrow"
+                    ],
+                    environment: [
+                        "Keep bedroom slightly cool and dry",
+                        "Use firm, supportive mattress",
+                        "Ensure good air circulation",
+                        "Minimize excessive comfort items"
+                    ],
+                    avoid: [
+                        "Daytime napping",
+                        "Heavy meals close to bedtime",
+                        "Excessive comfort and lounging",
+                        "Sleeping in too late"
+                    ]
+                }
+            };
+
+            const plan = sleepOptimization[dosha];
+            
+            lifestylePlanDisplay.style.display = 'block';
+            lifestylePlanDisplay.innerHTML = `
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">😴 Sleep Optimization for ${dosha.charAt(0).toUpperCase() + dosha.slice(1)}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h6 class="text-primary">🌙 Bedtime</h6>
+                                    <strong>${plan.bedtime}</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h6 class="text-warning">🌅 Wake Time</h6>
+                                    <strong>${plan.waketime}</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h6 class="text-info">⏰ Duration</h6>
+                                    <strong>${plan.duration}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h6 class="text-success mb-3">🛏️ Bedtime Preparation</h6>
+                                <ul class="list-unstyled">
+                                    ${plan.preparation.map(prep => `<li class="mb-2"><small>${prep}</small></li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="text-primary mb-3">🏠 Sleep Environment</h6>
+                                <ul class="list-unstyled">
+                                    ${plan.environment.map(env => `<li class="mb-2"><small><i class="bi bi-house text-primary me-1"></i>${env}</small></li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="text-danger mb-3">❌ Avoid Before Bed</h6>
+                                <ul class="list-unstyled">
+                                    ${plan.avoid.map(avoid => `<li class="mb-2"><small><i class="bi bi-x-circle text-danger me-1"></i>${avoid}</small></li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize insights when tab is shown
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user has assessment data and update insights tab accordingly
+            const insightsTab = document.getElementById('insights-tab');
+            if (insightsTab) {
+                insightsTab.addEventListener('shown.bs.tab', function() {
+                    generateInsights();
+                });
+            }
+            
+            // Load diet and lifestyle content if user has assessment data
+            loadDietContent();
+            loadLifestyleContent();
+            
+            // Initialize insights on page load if assessment exists
+            setTimeout(() => {
+                generateInsights();
+            }, 500);
+            
+            // Initialize AI Assistant tabs
+            initializeAIAssistantTabs();
+        });
+
+        // Fix navigation to pages function
+        function navigateToPage(pageId) {
+            console.log('Navigating to page:', pageId);
+            
+            if (!pageId || pageId === 'null' || pageId === null) {
+                console.error('Invalid page ID:', pageId);
+                return;
+            }
+            
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show target page
+            const targetPage = document.getElementById(pageId + '-page');
+            console.log('Target page element:', targetPage);
+            
+            if (targetPage) {
+                targetPage.classList.add('active');
+                console.log('Successfully navigated to:', pageId);
+            } else {
+                console.error('Page not found:', pageId + '-page');
+                // Fallback to home page
+                const homePage = document.getElementById('home-page');
+                if (homePage) {
+                    homePage.classList.add('active');
+                    pageId = 'home';
+                }
+            }
+            
+            // Update sidebar navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            const targetLink = document.querySelector(`[data-page="${pageId}"]`);
+            if (targetLink) {
+                targetLink.classList.add('active');
+            }
+            
+            // Load page-specific content
+            if (pageId === 'diet-plan') {
+                loadDietContent();
+            } else if (pageId === 'lifestyle') {
+                loadLifestyleContent();
+            } else if (pageId === 'ai-assistant') {
+                initializeAIAssistantTabs();
+                
+                // Check if user has assessment data and auto-switch to insights tab
+                const userData = getUserData();
+                if (userData && userData.currentUser && userData.currentUser.primary_dosha) {
+                    setTimeout(() => {
+                        const insightsTab = document.getElementById('insights-tab');
+                        const insightsContent = document.getElementById('insights-content');
+                        
+                        if (insightsTab && insightsContent) {
+                            // Activate insights tab
+                            document.querySelectorAll('#ai-tabs .nav-link').forEach(tab => {
+                                tab.classList.remove('active');
+                            });
+                            document.querySelectorAll('.tab-pane').forEach(pane => {
+                                pane.classList.remove('show', 'active');
+                            });
+                            
+                            insightsTab.classList.add('active');
+                            insightsContent.classList.add('show', 'active');
+                            
+                            // Generate insights
+                            generateInsights();
+                        }
+                    }, 300);
+                }
+            }
+        }
+
+        // Initialize AI Assistant Tabs
+        function initializeAIAssistantTabs() {
+            console.log('Initializing AI Assistant tabs...');
+            
+            // Check if Bootstrap is loaded
+            if (typeof bootstrap === 'undefined') {
+                console.warn('Bootstrap JS not loaded, using manual tab switching');
+                setupManualTabs();
+                return;
+            }
+            
+            // Initialize Bootstrap tabs
+            const triggerTabList = document.querySelectorAll('#ai-tabs button[data-bs-toggle="pill"]');
+            console.log('Found tabs:', triggerTabList.length);
+            
+            triggerTabList.forEach(triggerEl => {
+                const tabTrigger = new bootstrap.Tab(triggerEl);
+                
+                triggerEl.addEventListener('click', event => {
+                    event.preventDefault();
+                    tabTrigger.show();
+                });
+            });
+            
+            // Add event listeners for tab shown events
+            const insightsTabButton = document.getElementById('insights-tab');
+            if (insightsTabButton) {
+                insightsTabButton.addEventListener('shown.bs.tab', function() {
+                    console.log('Insights tab shown, generating insights...');
+                    generateInsights();
+                });
+            }
+            
+            // Ensure chat tab is active by default
+            const chatTab = document.getElementById('chat-tab');
+            const chatContent = document.getElementById('chat-content');
+            if (chatTab && chatContent) {
+                chatTab.classList.add('active');
+                chatContent.classList.add('show', 'active');
+            }
+        }
+
+        // Manual tab switching fallback
+        function setupManualTabs() {
+            const tabButtons = document.querySelectorAll('#ai-tabs button');
+            const tabContents = document.querySelectorAll('.tab-pane');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const target = this.getAttribute('data-bs-target');
+                    
+                    // Remove active from all tabs and content
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => {
+                        content.classList.remove('show', 'active');
+                    });
+                    
+                    // Add active to clicked tab and its content
+                    this.classList.add('active');
+                    const targetContent = document.querySelector(target);
+                    if (targetContent) {
+                        targetContent.classList.add('show', 'active');
+                        
+                        // Trigger insights generation if insights tab
+                        if (target === '#insights-content') {
+                            generateInsights();
+                        }
+                    }
+                });
+            });
+        }
+
+        // Load Diet Plan Content
+        function loadDietContent() {
+            const userData = getUserData();
+            const noAssessment = document.getElementById('diet-no-assessment');
+            const recommendations = document.getElementById('diet-recommendations');
+            
+            if (!userData || !userData.currentUser || !userData.currentUser.primary_dosha) {
+                if (noAssessment) noAssessment.style.display = 'block';
+                if (recommendations) recommendations.style.display = 'none';
+                return;
+            }
+            
+            // Hide no-assessment message and show recommendations
+            if (noAssessment) noAssessment.style.display = 'none';
+            if (recommendations) {
+                recommendations.style.display = 'block';
+                generateDietPlan(userData.currentUser);
+            }
+        }
+
+        function generateDietPlan(user) {
+            const dosha = user.primary_dosha;
+            const recommendations = document.getElementById('diet-recommendations');
+            
+            const dietPlans = {
+                vata: {
+                    title: "Vata Diet Plan",
+                    description: "Warm, nourishing foods to ground your airy nature",
+                    color: "info",
+                    icon: "🌪️",
+                    foods: {
+                        recommended: [
+                            "🍲 Warm soups and stews",
+                            "🥛 Warm milk with spices",
+                            "🥑 Healthy fats (ghee, avocado, nuts)",
+                            "🍠 Sweet potatoes and root vegetables",
+                            "🍌 Sweet fruits (bananas, dates, figs)",
+                            "🌾 Cooked grains (rice, oats, quinoa)",
+                            "🫚 Warming spices (ginger, cinnamon, cardamom)"
+                        ],
+                        avoid: [
+                            "❄️ Cold or frozen foods",
+                            "🥗 Raw vegetables in excess",
+                            "☕ Excessive caffeine",
+                            "🌶️ Very spicy foods",
+                            "🫘 Dry beans and legumes",
+                            "🥬 Bitter leafy greens in excess"
+                        ]
+                    },
+                    tips: [
+                        "Eat at regular times to maintain stability",
+                        "Choose warm, cooked foods over cold, raw ones",
+                        "Add healthy fats to every meal",
+                        "Drink warm beverages throughout the day"
+                    ]
+                },
+                pitta: {
+                    title: "Pitta Diet Plan",
+                    description: "Cool, fresh foods to balance your fiery constitution",
+                    color: "warning",
+                    icon: "🔥",
+                    foods: {
+                        recommended: [
+                            "🥒 Cool, fresh vegetables (cucumber, lettuce)",
+                            "🥥 Coconut water and cooling drinks",
+                            "🍇 Sweet fruits (grapes, melons, pears)",
+                            "🌿 Fresh herbs (cilantro, mint, parsley)",
+                            "🥛 Milk and dairy products",
+                            "🌾 Cooling grains (basmati rice, barley)",
+                            "🫒 Olive oil and cooling oils"
+                        ],
+                        avoid: [
+                            "🌶️ Spicy and hot foods",
+                            "🍅 Acidic foods (tomatoes, citrus)",
+                            "🍖 Red meat and processed meats",
+                            "☕ Excessive caffeine and alcohol",
+                            "🧄 Pungent foods (garlic, onions)",
+                            "🧂 Excessive salt"
+                        ]
+                    },
+                    tips: [
+                        "Eat cooling foods, especially in summer",
+                        "Avoid skipping meals to prevent irritability",
+                        "Choose sweet, bitter, and astringent tastes",
+                        "Drink plenty of cool (not ice-cold) water"
+                    ]
+                },
+                kapha: {
+                    title: "Kapha Diet Plan",
+                    description: "Light, warming foods to energize your stable nature",
+                    color: "success",
+                    icon: "🌍",
+                    foods: {
+                        recommended: [
+                            "🌶️ Spicy foods and warming spices",
+                            "🥗 Light, fresh salads",
+                            "🫚 Ginger and digestive spices",
+                            "🍵 Herbal teas (ginger, cinnamon)",
+                            "🐟 Lean proteins (fish, chicken)",
+                            "🌽 Light grains (millet, buckwheat)",
+                            "🍎 Astringent fruits (apples, pears)"
+                        ],
+                        avoid: [
+                            "🥛 Excessive dairy products",
+                            "🍰 Heavy, sweet foods",
+                            "🥜 Excessive nuts and oils",
+                            "🍞 Heavy breads and pastries",
+                            "❄️ Cold, icy drinks",
+                            "🧂 Excessive salt"
+                        ]
+                    },
+                    tips: [
+                        "Eat lighter meals, especially at dinner",
+                        "Choose pungent, bitter, and astringent tastes",
+                        "Drink warm beverages instead of cold",
+                        "Avoid eating when not truly hungry"
+                    ]
+                }
+            };
+            
+            const plan = dietPlans[dosha];
+            
+            recommendations.innerHTML = `
+                <div class="row">
+                    <!-- Diet Plan Overview -->
+                    <div class="col-12 mb-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-${plan.color} text-white">
+                                <h4 class="mb-0">${plan.icon} ${plan.title}</h4>
+                            </div>
+                            <div class="card-body">
+                                <p class="lead mb-3">${plan.description}</p>
+                                
+                                <!-- Advanced Meal Planning Controls -->
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <button onclick="generateDailyMealPlan('${dosha}')" class="btn btn-primary btn-sm w-100">
+                                            📅 Daily Plan
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button onclick="generateWeeklyMealPlan('${dosha}')" class="btn btn-secondary btn-sm w-100">
+                                            📆 Weekly Plan
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button onclick="generateShoppingList('${dosha}')" class="btn btn-info btn-sm w-100">
+                                            🛒 Shopping List
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button onclick="generateSeasonalMenu('${dosha}')" class="btn btn-success btn-sm w-100">
+                                            🌿 Seasonal Menu
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Meal Plan Display Area -->
+                    <div class="col-12 mb-4">
+                        <div id="meal-plan-display" style="display: none;">
+                            <!-- Dynamic meal plans will appear here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Recommended Foods -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">✅ Recommended Foods</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled mb-0">
+                                    ${plan.foods.recommended.map(food => `<li class="mb-2">${food}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Foods to Avoid -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0">❌ Foods to Limit/Avoid</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled mb-0">
+                                    ${plan.foods.avoid.map(food => `<li class="mb-2">${food}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Therapeutic Herbs & Spices -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">🌿 Therapeutic Herbs & Spices</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled mb-0">
+                                    ${getTherapeuticHerbs(dosha).map(herb => `<li class="mb-2">🌿 ${herb}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Diet Tips -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">💡 Personalized Tips</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled mb-0">
+                                    ${plan.tips.map(tip => `
+                                        <li class="mb-2 d-flex align-items-start">
+                                            <i class="bi bi-lightbulb text-warning me-2 mt-1"></i>
+                                            <span>${tip}</span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Therapeutic Herbs Function
+        function getTherapeuticHerbs(dosha) {
+            const herbs = {
+                vata: [
+                    "Ashwagandha - for stress and energy",
+                    "Ginger - for digestion and warmth",
+                    "Cinnamon - for circulation and warmth",
+                    "Cardamom - for digestion and breath",
+                    "Turmeric - for inflammation and immunity",
+                    "Fennel - for digestion and bloating",
+                    "Cumin - for digestive fire"
+                ],
+                pitta: [
+                    "Coriander - for cooling and digestion",
+                    "Mint - for cooling and freshness",
+                    "Coconut - for cooling and hydration",
+                    "Aloe Vera - for cooling and healing",
+                    "Rose - for cooling and heart health",
+                    "Fennel - for cooling digestion",
+                    "Brahmi - for mental clarity and cooling"
+                ],
+                kapha: [
+                    "Ginger - for metabolism and warmth",
+                    "Black Pepper - for circulation and metabolism",
+                    "Cayenne - for stimulation and warmth",
+                    "Mustard Seeds - for circulation",
+                    "Garlic - for circulation and immunity",
+                    "Fenugreek - for metabolism",
+                    "Trikatu - for digestive fire"
+                ]
+            };
+            return herbs[dosha] || [];
+        }
+
+        // Advanced Meal Planning Functions
+        function generateDailyMealPlan(dosha) {
+            const mealPlanDisplay = document.getElementById('meal-plan-display');
+            if (!mealPlanDisplay) return;
+
+            const dailyPlans = {
+                vata: {
+                    breakfast: "🍲 Warm oatmeal with ghee, cinnamon, and dates",
+                    lunch: "🍛 Kitchari (rice and lentils) with vegetables and ghee",
+                    dinner: "🍲 Warm soup with root vegetables and herbs",
+                    snacks: "🥜 Warm milk with almonds and cardamom"
+                },
+                pitta: {
+                    breakfast: "🥣 Cool yogurt with sweet fruits and coconut",
+                    lunch: "🥗 Fresh salad with cooling vegetables and olive oil",
+                    dinner: "🍚 Basmati rice with steamed vegetables",
+                    snacks: "🥥 Coconut water with fresh mint"
+                },
+                kapha: {
+                    breakfast: "🍵 Herbal tea with light toast and honey",
+                    lunch: "🌶️ Spicy vegetable curry with quinoa",
+                    dinner: "🥗 Light salad with warming spices",
+                    snacks: "🫚 Ginger tea with a small portion of nuts"
+                }
+            };
+
+            const plan = dailyPlans[dosha];
+            
+            mealPlanDisplay.style.display = 'block';
+            mealPlanDisplay.innerHTML = `
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">📅 Today's Meal Plan for ${dosha.charAt(0).toUpperCase() + dosha.slice(1)}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded">
+                                    <h6 class="text-success mb-2">🌅 Breakfast</h6>
+                                    <p class="mb-0">${plan.breakfast}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded">
+                                    <h6 class="text-warning mb-2">☀️ Lunch</h6>
+                                    <p class="mb-0">${plan.lunch}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded">
+                                    <h6 class="text-info mb-2">🌙 Dinner</h6>
+                                    <p class="mb-0">${plan.dinner}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded">
+                                    <h6 class="text-secondary mb-2">🍪 Snacks</h6>
+                                    <p class="mb-0">${plan.snacks}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateWeeklyMealPlan(dosha) {
+            const mealPlanDisplay = document.getElementById('meal-plan-display');
+            if (!mealPlanDisplay) return;
+
+            mealPlanDisplay.style.display = 'block';
+            mealPlanDisplay.innerHTML = `
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">📆 Weekly Meal Plan for ${dosha.charAt(0).toUpperCase() + dosha.slice(1)}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary mb-3" role="status"></div>
+                            <p class="text-muted">Generating your personalized weekly meal plan...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Simulate loading and show weekly plan
+            setTimeout(() => {
+                const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                const weeklyPlan = days.map(day => `
+                    <div class="col-12 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body py-2">
+                                <h6 class="text-primary mb-1">${day}</h6>
+                                <small class="text-muted">Focus on ${dosha === 'vata' ? 'warming, grounding foods' : dosha === 'pitta' ? 'cooling, fresh foods' : 'light, energizing foods'}</small>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                mealPlanDisplay.innerHTML = `
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">📆 Weekly Meal Plan for ${dosha.charAt(0).toUpperCase() + dosha.slice(1)}</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                ${weeklyPlan}
+                            </div>
+                            <div class="alert alert-info mt-3">
+                                <strong>💡 Weekly Focus:</strong> Follow your daily meal plan structure while varying ingredients based on seasonal availability and your body's needs.
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }, 2000);
+        }
+
+        function generateShoppingList(dosha) {
+            const mealPlanDisplay = document.getElementById('meal-plan-display');
+            if (!mealPlanDisplay) return;
+
+            const shoppingLists = {
+                vata: [
+                    "🌾 Grains: Rice, oats, quinoa",
+                    "🥑 Healthy fats: Ghee, avocado, nuts",
+                    "🍠 Root vegetables: Sweet potatoes, carrots",
+                    "🫚 Warming spices: Ginger, cinnamon, cardamom",
+                    "🍌 Sweet fruits: Bananas, dates, figs",
+                    "🥛 Dairy: Warm milk, yogurt",
+                    "🌿 Herbs: Ashwagandha, turmeric"
+                ],
+                pitta: [
+                    "🥒 Cooling vegetables: Cucumber, lettuce, zucchini",
+                    "🍇 Sweet fruits: Grapes, melons, pears",
+                    "🌿 Fresh herbs: Cilantro, mint, parsley",
+                    "🥥 Coconut products: Coconut water, coconut oil",
+                    "🌾 Cooling grains: Basmati rice, barley",
+                    "🥛 Dairy: Milk, fresh cheese",
+                    "🫒 Cooling oils: Olive oil, sunflower oil"
+                ],
+                kapha: [
+                    "🌶️ Warming spices: Ginger, black pepper, cayenne",
+                    "🥗 Light vegetables: Leafy greens, sprouts",
+                    "🍎 Astringent fruits: Apples, pears, berries",
+                    "🐟 Lean proteins: Fish, chicken, legumes",
+                    "🍵 Herbal teas: Ginger, cinnamon, green tea",
+                    "🌽 Light grains: Millet, buckwheat, quinoa",
+                    "🧄 Pungent foods: Garlic, onions, radishes"
+                ]
+            };
+
+            const list = shoppingLists[dosha];
+            
+            mealPlanDisplay.style.display = 'block';
+            mealPlanDisplay.innerHTML = `
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">🛒 Shopping List for ${dosha.charAt(0).toUpperCase() + dosha.slice(1)}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            ${list.map(item => `
+                                <div class="col-md-6 mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <input type="checkbox" class="form-check-input me-2" id="item-${Math.random()}">
+                                        <label class="form-check-label">${item}</label>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="alert alert-success mt-3">
+                            <strong>💡 Shopping Tip:</strong> Buy organic and seasonal ingredients when possible for maximum nutritional benefit and dosha balance.
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateSeasonalMenu(dosha) {
+            const mealPlanDisplay = document.getElementById('meal-plan-display');
+            if (!mealPlanDisplay) return;
+
+            const currentSeason = getCurrentSeason();
+            const seasonalMenus = {
+                vata: {
+                    spring: "Light, warming foods to transition from winter",
+                    summer: "Cooling foods but still grounding for Vata",
+                    fall: "Extra warming and nourishing foods for Vata season",
+                    winter: "Heavy, warm, oily foods to combat cold and dryness"
+                },
+                pitta: {
+                    spring: "Gentle detox with bitter and astringent foods",
+                    summer: "Maximum cooling foods during Pitta season",
+                    fall: "Moderately cooling foods as heat decreases",
+                    winter: "Warming foods but avoid excessive heat"
+                },
+                kapha: {
+                    spring: "Light, detoxifying foods during Kapha season",
+                    summer: "Light, cooling foods to prevent sluggishness",
+                    fall: "Warming, stimulating foods as energy decreases",
+                    winter: "Light, warming foods to prevent weight gain"
+                }
+            };
+
+            mealPlanDisplay.style.display = 'block';
+            mealPlanDisplay.innerHTML = `
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">🌿 Seasonal Menu for ${dosha.charAt(0).toUpperCase() + dosha.slice(1)} - ${currentSeason}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">${currentSeason} Guidance for ${dosha.charAt(0).toUpperCase() + dosha.slice(1)}</h6>
+                            <p class="mb-0">${seasonalMenus[dosha][currentSeason]}</p>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h6 class="text-success">🌱 Spring</h6>
+                                    <small>${seasonalMenus[dosha].spring}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h6 class="text-warning">☀️ Summer</h6>
+                                    <small>${seasonalMenus[dosha].summer}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h6 class="text-info">🍂 Fall</h6>
+                                    <small>${seasonalMenus[dosha].fall}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getCurrentSeason() {
+            const month = new Date().getMonth();
+            if (month >= 2 && month <= 4) return 'spring';
+            if (month >= 5 && month <= 7) return 'summer';
+            if (month >= 8 && month <= 10) return 'fall';
+            return 'winter';
+        }
+
+        // Load Lifestyle Content
+        function loadLifestyleContent() {
+            const userData = getUserData();
+            const noAssessment = document.getElementById('lifestyle-no-assessment');
+            const recommendations = document.getElementById('lifestyle-recommendations');
+            
+            if (!userData || !userData.currentUser || !userData.currentUser.primary_dosha) {
+                if (noAssessment) noAssessment.style.display = 'block';
+                if (recommendations) recommendations.style.display = 'none';
+                return;
+            }
+            
+            // Hide no-assessment message and show recommendations
+            if (noAssessment) noAssessment.style.display = 'none';
+            if (recommendations) {
+                recommendations.style.display = 'block';
+                generateLifestylePlan(userData.currentUser);
+            }
+        }
+
+        function generateLifestylePlan(user) {
+            const dosha = user.primary_dosha;
+            const recommendations = document.getElementById('lifestyle-recommendations');
+            
+            const lifestylePlans = {
+                vata: {
+                    title: "Vata Lifestyle Guide",
+                    description: "Grounding routines to balance your dynamic energy",
+                    color: "info",
+                    icon: "🌪️",
+                    categories: [
+                        {
+                            title: "Daily Routine",
+                            icon: "🌅",
+                            items: [
+                                "Wake up between 6-7 AM consistently",
+                                "Start with warm oil massage (abhyanga)",
+                                "Practice gentle yoga or stretching",
+                                "Eat meals at regular times",
+                                "Wind down by 9-10 PM for early sleep"
+                            ]
+                        },
+                        {
+                            title: "Exercise & Movement",
+                            icon: "🧘",
+                            items: [
+                                "Gentle, grounding exercises (yoga, walking)",
+                                "Avoid excessive cardio or intense workouts",
+                                "Practice restorative yoga poses",
+                                "Swimming in warm water",
+                                "Dance or rhythmic movements"
+                            ]
+                        },
+                        {
+                            title: "Mind & Stress Management",
+                            icon: "🧠",
+                            items: [
+                                "Daily meditation (10-20 minutes)",
+                                "Deep breathing exercises (pranayama)",
+                                "Limit screen time, especially before bed",
+                                "Practice gratitude journaling",
+                                "Avoid overstimulation and multitasking"
+                            ]
+                        },
+                        {
+                            title: "Environment & Habits",
+                            icon: "🏠",
+                            items: [
+                                "Keep living spaces warm and cozy",
+                                "Use calming colors (earth tones, pastels)",
+                                "Play soft, soothing music",
+                                "Maintain consistent daily routines",
+                                "Surround yourself with supportive people"
+                            ]
+                        }
+                    ]
+                },
+                pitta: {
+                    title: "Pitta Lifestyle Guide",
+                    description: "Cooling practices to balance your fiery nature",
+                    color: "warning",
+                    icon: "🔥",
+                    categories: [
+                        {
+                            title: "Daily Routine",
+                            icon: "🌅",
+                            items: [
+                                "Wake up early (5:30-6:30 AM) before sunrise",
+                                "Exercise in cooler morning hours",
+                                "Take breaks during intense work periods",
+                                "Eat lunch at peak pitta time (12-1 PM)",
+                                "Practice cooling evening routines"
+                            ]
+                        },
+                        {
+                            title: "Exercise & Movement",
+                            icon: "🏊",
+                            items: [
+                                "Swimming and water sports",
+                                "Moderate intensity workouts",
+                                "Avoid exercising in hot weather",
+                                "Cooling yoga practices (moon salutations)",
+                                "Walking in nature, especially near water"
+                            ]
+                        },
+                        {
+                            title: "Mind & Stress Management",
+                            icon: "😌",
+                            items: [
+                                "Practice patience and tolerance",
+                                "Cooling pranayama (sheetali, sheetkari)",
+                                "Avoid competitive or aggressive activities",
+                                "Meditation in cool, peaceful environments",
+                                "Practice forgiveness and letting go"
+                            ]
+                        },
+                        {
+                            title: "Environment & Habits",
+                            icon: "❄️",
+                            items: [
+                                "Keep living spaces cool and well-ventilated",
+                                "Use cooling colors (blues, greens, whites)",
+                                "Spend time in nature, especially near water",
+                                "Avoid excessive heat and sun exposure",
+                                "Practice moderation in all activities"
+                            ]
+                        }
+                    ]
+                },
+                kapha: {
+                    title: "Kapha Lifestyle Guide",
+                    description: "Energizing practices to activate your stable nature",
+                    color: "success",
+                    icon: "🌍",
+                    categories: [
+                        {
+                            title: "Daily Routine",
+                            icon: "🌅",
+                            items: [
+                                "Wake up early (5-6 AM) before sunrise",
+                                "Start with vigorous exercise or yoga",
+                                "Avoid daytime naps",
+                                "Eat lighter breakfast, substantial lunch",
+                                "Stay active throughout the day"
+                            ]
+                        },
+                        {
+                            title: "Exercise & Movement",
+                            icon: "🏃",
+                            items: [
+                                "Vigorous cardio and strength training",
+                                "Dynamic yoga practices (vinyasa, power yoga)",
+                                "Running, cycling, or high-intensity workouts",
+                                "Team sports and competitive activities",
+                                "Regular, consistent exercise routine"
+                            ]
+                        },
+                        {
+                            title: "Mind & Stress Management",
+                            icon: "🎯",
+                            items: [
+                                "Set challenging goals and deadlines",
+                                "Practice energizing pranayama (bhastrika)",
+                                "Engage in stimulating mental activities",
+                                "Try new experiences and adventures",
+                                "Avoid excessive comfort and routine"
+                            ]
+                        },
+                        {
+                            title: "Environment & Habits",
+                            icon: "☀️",
+                            items: [
+                                "Keep spaces bright and well-lit",
+                                "Use energizing colors (reds, oranges, yellows)",
+                                "Seek warmth and sunlight",
+                                "Declutter and organize living spaces",
+                                "Surround yourself with motivated people"
+                            ]
+                        }
+                    ]
+                }
+            };
+            
+            const plan = lifestylePlans[dosha];
+            
+            recommendations.innerHTML = `
+                <div class="row">
+                    <!-- Lifestyle Overview -->
+                    <div class="col-12 mb-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-${plan.color} text-white">
+                                <h4 class="mb-0">${plan.icon} ${plan.title}</h4>
+                            </div>
+                            <div class="card-body">
+                                <p class="lead mb-3">${plan.description}</p>
+                                
+                                <!-- Complete Lifestyle Planning System -->
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <button onclick="generateExercisePlan('${dosha}')" class="btn btn-primary btn-sm w-100">
+                                            💪 Exercise Plan
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button onclick="generateDailyRoutine('${dosha}')" class="btn btn-warning btn-sm w-100">
+                                            🌅 Daily Routine
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button onclick="generateStressManagement('${dosha}')" class="btn btn-info btn-sm w-100">
+                                            🧘 Stress Management
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button onclick="generateSleepOptimization('${dosha}')" class="btn btn-success btn-sm w-100">
+                                            😴 Sleep Optimization
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Lifestyle Plan Display Area -->
+                    <div class="col-12 mb-4">
+                        <div id="lifestyle-plan-display" style="display: none;">
+                            <!-- Dynamic lifestyle plans will appear here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Lifestyle Categories -->
+                    ${plan.categories.map(category => `
+                        <div class="col-lg-6 mb-4">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">${category.icon} ${category.title}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled mb-0">
+                                        ${category.items.map(item => `
+                                            <li class="mb-2 d-flex align-items-start">
+                                                <i class="bi bi-check-circle text-success me-2 mt-1"></i>
+                                                <span>${item}</span>
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    </script>
+    
+    <!-- Bootstrap JS already loaded above; do not re-include. -->
+    
+    <!-- Optimized Performance Script -->
+    <script>
+        // Optimized event handling to avoid performance issues
+        let progressUpdateTimeout;
+        
+        // Single, debounced progress update function
+        function updateProgressOptimized() {
+            clearTimeout(progressUpdateTimeout);
+            progressUpdateTimeout = setTimeout(() => {
+                const checkedInputs = document.querySelectorAll('#assessment-form input[type="radio"]:checked');
+                const totalQuestions = document.querySelectorAll('#assessment-form .question-group').length;
+                const progress = (checkedInputs.length / totalQuestions) * 100;
+                
+                const progressFill = document.getElementById('progress-fill');
+                const progressText = document.getElementById('progress-text');
+                
+                if (progressFill) {
+                    progressFill.style.width = progress + '%';
+                }
+                if (progressText) {
+                    progressText.textContent = `${checkedInputs.length}/${totalQuestions}`;
+                }
+            }, 100); // Debounce by 100ms
+        }
+        
+        // Sidebar collapse functionality
+        function toggleSidebarCollapse() {
+            console.log('Toggle sidebar called');
+            
+            const sidebar = document.getElementById('sidebar');
+            const main = document.querySelector('main');
+            const floatingToggle = document.getElementById('floating-toggle');
+            
+            if (!sidebar) {
+                console.error('Sidebar element not found!');
+                return;
+            }
+            
+            const isCurrentlyCollapsed = sidebar.classList.contains('collapsed');
+            console.log('Current collapsed state:', isCurrentlyCollapsed);
+            
+            if (isCurrentlyCollapsed) {
+                // EXPAND - Show sidebar
+                console.log('Expanding sidebar');
+                sidebar.classList.remove('collapsed');
+                sidebar.style.transform = 'translateX(0)';
+                
+                if (main) {
+                    main.style.marginLeft = '280px';
+                }
+                
+                // Hide floating toggle when sidebar is visible
+                if (floatingToggle) {
+                    floatingToggle.style.display = 'none';
+                }
+                
+                // Show sidebar text
+                document.querySelectorAll('.sidebar-text').forEach(el => {
+                    el.style.opacity = '1';
+                    el.style.visibility = 'visible';
+                    el.style.width = 'auto';
+                });
+                
+            } else {
+                // COLLAPSE - Hide sidebar
+                console.log('Collapsing sidebar');
+                sidebar.classList.add('collapsed');
+                sidebar.style.transform = 'translateX(-280px)';
+                
+                if (main) {
+                    main.style.marginLeft = '0';
+                }
+                
+                // Show floating toggle when sidebar is hidden
+                if (floatingToggle) {
+                    floatingToggle.style.display = 'block';
+                }
+                
+                // Hide sidebar text
+                document.querySelectorAll('.sidebar-text').forEach(el => {
+                    el.style.opacity = '0';
+                    el.style.visibility = 'hidden';
+                    el.style.width = '0';
+                });
+            }
+            
+            // Save state to localStorage
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+        
+        // Initialize sidebar state on page load
+        function initializeSidebarState() {
+            const sidebar = document.getElementById('sidebar');
+            const main = document.querySelector('main');
+            const floatingToggle = document.getElementById('floating-toggle');
+            const savedState = localStorage.getItem('sidebarCollapsed');
+            
+            if (!sidebar) return;
+            
+            if (savedState === 'true') {
+                // Initialize as collapsed
+                sidebar.classList.add('collapsed');
+                sidebar.style.transform = 'translateX(-280px)';
+                
+                if (main) {
+                    main.style.marginLeft = '0';
+                }
+                
+                if (floatingToggle) {
+                    floatingToggle.style.display = 'block';
+                }
+                
+                document.querySelectorAll('.sidebar-text').forEach(el => {
+                    el.style.opacity = '0';
+                    el.style.visibility = 'hidden';
+                    el.style.width = '0';
+                });
+            } else {
+                // Initialize as expanded
+                sidebar.classList.remove('collapsed');
+                sidebar.style.transform = 'translateX(0)';
+                
+                if (main) {
+                    main.style.marginLeft = '280px';
+                }
+                
+                if (floatingToggle) {
+                    floatingToggle.style.display = 'none';
+                }
+            }
+        }
+        
+        // Single event listener using event delegation
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'radio' && e.target.closest('#assessment-form')) {
+                updateProgressOptimized();
+                
+                // Add visual feedback
+                const label = e.target.closest('.option-label');
+                if (label) {
+                    // Remove previous selections in the same question group
+                    const questionGroup = e.target.closest('.question-group');
+                    if (questionGroup) {
+                        questionGroup.querySelectorAll('.option-label').forEach(l => {
+                            l.classList.remove('selected');
+                        });
+                    }
+                    label.classList.add('selected');
+                }
+            }
+        });
+        
+        // Enhanced navigation with smooth transitions
+        function navigateToPage(pageId) {
+            console.log('Navigating to:', pageId);
+            
+            // Update navigation active state
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            const activeLink = document.querySelector(`[data-page="${pageId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+            
+            // Smooth page transition
+            const currentPage = document.querySelector('.page.active');
+            const targetPage = document.getElementById(`${pageId}-page`);
+            
+            if (currentPage && targetPage) {
+                // Fade out current page
+                currentPage.style.opacity = '0';
+                currentPage.style.transform = 'translateY(-20px)';
+                
+                setTimeout(() => {
+                    currentPage.classList.remove('active');
+                    targetPage.classList.add('active');
+                    
+                    // Fade in target page
+                    setTimeout(() => {
+                        targetPage.style.opacity = '1';
+                        targetPage.style.transform = 'translateY(0)';
+                    }, 50);
+                }, 200);
+            }
+            
+            // Load page-specific content
+            if (pageId === 'diet-plan') {
+                loadDietContent();
+            } else if (pageId === 'lifestyle') {
+                loadLifestyleContent();
+            }
+        }
+        
+        // Chat functionality
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+        
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (message) {
+                addChatMessage('user', message);
+                input.value = '';
+                
+                // Simulate AI response
+                setTimeout(() => {
+                    const response = generateAIResponse(message);
+                    addChatMessage('ai', response);
+                }, 1000);
+            }
+        }
+        
+        function sendQuickMessage(message) {
+            addChatMessage('user', message);
+            
+            setTimeout(() => {
+                const response = generateAIResponse(message);
+                addChatMessage('ai', response);
+            }, 1000);
+        }
+        
+        function addChatMessage(sender, message) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'd-flex mb-3';
+            
+            if (sender === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="flex-grow-1"></div>
+                    <div class="me-3">
+                        <div class="bg-success text-white rounded-3 p-3">
+                            ${message}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            👤
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="me-3">
+                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            🤖
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="bg-light rounded-3 p-3">
+                            ${message}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function generateAIResponse(message) {
+            const responses = {
+                'what is my dosha type': 'Based on your assessment, I can help you understand your dosha type. Have you completed the Prakriti assessment yet?',
+                'give me diet recommendations': 'I\'d be happy to provide personalized diet recommendations! Your diet should align with your dosha type for optimal health.',
+                'what lifestyle changes should i make': 'Lifestyle changes depend on your constitution. Generally, maintaining regular routines, proper sleep, and stress management are key.',
+                'help me with stress management': 'For stress management, I recommend: 🧘 Daily meditation, 🌿 Herbal teas, 🚶 Regular walks in nature, and 😴 Consistent sleep schedule.'
+            };
+            
+            const key = message.toLowerCase();
+            return responses[key] || 'Thank you for your question! I\'m here to help with Ayurvedic guidance. Could you be more specific about what you\'d like to know?';
+        }
+        
+        // Data Management Functions
+        function updateDataStatus() {
+            try {
+                const dataStatus = document.getElementById('data-status');
+                if (!dataStatus) return;
+                
+                const savedData = localStorage.getItem('ayurvedic_prakriti_data');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    const lastUpdated = data.lastUpdated ? new Date(data.lastUpdated).toLocaleDateString() : 'Unknown';
+                    const assessmentCount = data.assessmentHistory ? data.assessmentHistory.length : 0;
+                    
+                    dataStatus.innerHTML = `Last assessment: ${lastUpdated}<br><small>${assessmentCount} total assessments</small>`;
+                } else {
+                    dataStatus.textContent = 'No saved data yet';
+                }
+            } catch (error) {
+                console.error('Error updating data status:', error);
+            }
+        }
+        
+        function exportData() {
+            try {
+                const savedData = localStorage.getItem('ayurvedic_prakriti_data');
+                if (!savedData) {
+                    alert('No data to export. Please complete an assessment first.');
+                    return;
+                }
+                
+                const data = JSON.parse(savedData);
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ayurveda-assessment-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert('Data exported successfully!');
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                alert('Error exporting data. Please try again.');
+            }
+        }
+        
+        function clearData() {
+            if (confirm('Are you sure you want to clear all saved assessment data? This action cannot be undone.')) {
+                try {
+                    localStorage.removeItem('ayurvedic_prakriti_data');
+                    updateDataStatus();
+                    alert('All data cleared successfully!');
+                } catch (error) {
+                    console.error('Error clearing data:', error);
+                    alert('Error clearing data. Please try again.');
+                }
+            }
+        }
+
+        // Initialize tooltips and other Bootstrap components
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize sidebar state
+            initializeSidebarState();
+            
+            // Update data status on page load
+            updateDataStatus();
+            
+            // Initialize Bootstrap tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Add smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
