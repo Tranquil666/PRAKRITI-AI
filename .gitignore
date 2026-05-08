@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+bower_components/
+
+# Build outputs
+dist/
+build/
+.cache/
+.parcel-cache/
+
+# Environment and secrets
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.pem
+*.key
+
+# User-generated and runtime data (must NEVER be committed)
+user_data/
+*.session
+sessions/
+uploads/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor and OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Python (if a Python pipeline is added later)
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Coverage / testing
+coverage/
+.nyc_output/
+.coverage
+htmlcov/
+
+# Misc
+*.bak
+*.tmp

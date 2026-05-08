@@ -3,6 +3,7 @@ const CACHE_NAME = 'prakriti-v2';
 
 const ASSETS_TO_CACHE = [
   './',
+  './index.html',
   './index_bootstrap.html',
   './prakriti_classifier.js',
   './real_prakriti_model.js',
@@ -11,6 +12,7 @@ const ASSETS_TO_CACHE = [
   './enhanced_decision_tree.js',
   './enhanced_dataset_model.js',
   './assessment.js',
+  './app.js',
   './safe_html.js',
   './ayurvedic_dosha_dataset.csv',
 ];

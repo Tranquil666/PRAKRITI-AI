@@ -21,10 +21,48 @@
     "Pitta",
     "Vata"
   ],
-  "metrics": {
-    "decision_tree_cv_accuracy_mean": 0.6159999999999999,
-    "decision_tree_cv_accuracy_std": 0.009143303560529977,
-    "random_forest_cv_accuracy_mean": 0.6386000000000001,
-    "random_forest_cv_accuracy_std": 0.010248902380255175
-  }
+  "winner": {
+    "name": "RandomForest",
+    "accuracy_mean": 0.6304000000000001,
+    "accuracy_std": 0.007391887445030538,
+    "f1_macro_mean": 0.606408721683238,
+    "f1_macro_std": 0.00871890763254807
+  },
+  "all_models": [
+    {
+      "name": "RandomForest",
+      "accuracy_mean": 0.6304000000000001,
+      "accuracy_std": 0.007391887445030538,
+      "f1_macro_mean": 0.606408721683238,
+      "f1_macro_std": 0.00871890763254807
+    },
+    {
+      "name": "LogReg",
+      "accuracy_mean": 0.6176,
+      "accuracy_std": 0.00835703296631048,
+      "f1_macro_mean": 0.6004137428651124,
+      "f1_macro_std": 0.009377515922347186
+    },
+    {
+      "name": "GradientBoosting",
+      "accuracy_mean": 0.6526000000000001,
+      "accuracy_std": 0.008616263691415214,
+      "f1_macro_mean": 0.5948891067483237,
+      "f1_macro_std": 0.013981871847101281
+    },
+    {
+      "name": "XGBoost",
+      "accuracy_mean": 0.6374000000000001,
+      "accuracy_std": 0.010556514576317327,
+      "f1_macro_mean": 0.5850323667245892,
+      "f1_macro_std": 0.01390636413264507
+    },
+    {
+      "name": "DecisionTree",
+      "accuracy_mean": 0.591,
+      "accuracy_std": 0.008438009243891603,
+      "f1_macro_mean": 0.5755516296763257,
+      "f1_macro_std": 0.00855186985974309
+    }
+  ]
 }

@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <meta name="description" content="A free, client-side Ayurvedic Prakriti assessment that estimates your dosha and suggests diet, lifestyle, and routine adjustments. No account required, no data leaves your device.">
+  <meta name="author" content="Faisal Haque">
+  <link rel="canonical" href="https://prakriti-ai-bice.vercel.app/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Prakriti — A Field Guide to Your Constitution">
+  <meta property="og:description" content="Estimate your Ayurvedic constitution and get personalised diet, lifestyle and routine guidance in your browser.">
+  <meta property="og:url" content="https://prakriti-ai-bice.vercel.app/">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://generativelanguage.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'">
+
+  <title>Prakriti — A Field Guide to Your Constitution</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+  <script src="safe_html.js"></script>
+
+  <style>
+    :root {
+      --paper:        #f4ede1;
+      --paper-tint:   #ebe1cf;
+      --ink:          #1f1a14;
+      --ink-soft:     #4a3f2f;
+      --ink-faint:    #8a7c66;
+      --rule:         #c9bca4;
+
+      --saffron:      #c9621c;
+      --indigo:       #2c3a5a;
+      --clay:         #6b5031;
+      --gilt:         #b4892b;
+      --moss:         #5a6b3a;
+
+      --shadow:       0 1px 0 rgba(31, 26, 20, 0.08), 0 22px 40px -32px rgba(31, 26, 20, 0.5);
+
+      --serif-display: 'Fraunces', 'Cormorant Garamond', Georgia, serif;
+      --serif-body:    'Cormorant Garamond', 'Fraunces', Georgia, serif;
+      --mono:          'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif-body);
+      font-size: 18px;
+      line-height: 1.55;
+      min-height: 100dvh;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(180, 137, 43, 0.08), transparent 60%),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(44, 58, 90, 0.05), transparent 60%),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.12  0 0 0 0 0.10  0 0 0 0 0.08  0 0 0 0.045 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+      background-attachment: fixed;
+    }
+
+    a { color: var(--saffron); text-decoration: none; border-bottom: 1px solid currentColor; }
+    a:hover { color: var(--ink); }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: clamp(1.5rem, 4vw, 4rem);
+      display: grid;
+      gap: clamp(2.5rem, 5vw, 5rem);
+    }
+
+    /* ── Masthead with section nav ──────────────────────────── */
+    .masthead {
+      border-top: 1px solid var(--ink);
+      border-bottom: 1px solid var(--ink);
+      padding: 1rem 0;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 1.5rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+    .masthead .left  { justify-self: start; }
+    .masthead .right { justify-self: end; text-align: right; }
+    .masthead .dot {
+      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--saffron); margin-right: 0.5rem; vertical-align: middle;
+    }
+
+    .nav-rail {
+      display: flex;
+      gap: 0;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 0;
+      margin-top: -1.5rem;
+    }
+    .nav-rail button {
+      background: transparent;
+      border: none;
+      padding: 0.9rem 1.25rem 0.9rem 0;
+      margin-right: 1.75rem;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      position: relative;
+      transition: color 220ms ease;
+    }
+    .nav-rail button:hover { color: var(--ink); }
+    .nav-rail button.active { color: var(--ink); }
+    .nav-rail button.active::after {
+      content: "";
+      position: absolute; left: 0; right: 1.25rem; bottom: -1px; height: 2px;
+      background: var(--saffron);
+    }
+    .nav-rail .num {
+      color: var(--saffron);
+      margin-right: 0.5rem;
+    }
+
+    /* ── Section pages ──────────────────────────────────────── */
+    .view { display: none; }
+    .view.active { display: grid; gap: clamp(2rem, 4vw, 4rem); }
+
+    /* ── Hero ───────────────────────────────────────────────── */
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: clamp(2rem, 5vw, 5rem);
+      align-items: end;
+    }
+    @media (max-width: 820px) { .hero { grid-template-columns: 1fr; } }
+
+    .hero h1 {
+      font-family: var(--serif-display);
+      font-weight: 300;
+      font-size: clamp(2.8rem, 7vw, 6rem);
+      line-height: 0.96;
+      letter-spacing: -0.02em;
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--saffron);
+      font-weight: 400;
+    }
+    .hero .lede {
+      font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+      line-height: 1.55;
+      color: var(--ink-soft);
+      max-width: 32ch;
+      margin-top: 1.5rem;
+    }
+    .hero .lede::first-letter {
+      font-family: var(--serif-display);
+      font-size: 3.4em;
+      float: left;
+      line-height: 0.85;
+      padding: 0.35rem 0.5rem 0 0;
+      color: var(--saffron);
+      font-weight: 500;
+    }
+
+    .dosha-trio {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      align-self: end;
+    }
+    .glyph-card {
+      border: 1px solid var(--rule);
+      padding: 1.25rem 1rem;
+      background: rgba(244, 237, 225, 0.6);
+      backdrop-filter: blur(6px);
+      display: grid;
+      gap: 0.75rem;
+      text-align: center;
+      transition: transform 280ms ease, border-color 280ms ease;
+    }
+    .glyph-card:hover { transform: translateY(-4px); border-color: var(--ink); }
+    .glyph-card svg { width: 100%; height: 60px; }
+    .glyph-card h3 {
+      font-family: var(--serif-display);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 1.4rem;
+    }
+    .glyph-card p {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+
+    .begin {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      flex-wrap: wrap;
+      padding-top: 2rem;
+      border-top: 1px solid var(--rule);
+    }
+    .begin .meta {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+
+    /* ── Buttons ────────────────────────────────────────────── */
+    .btn {
+      font-family: var(--serif-display);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 1.5rem;
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      padding: 1rem 2.25rem;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: background 220ms ease, transform 220ms ease;
+      box-shadow: var(--shadow);
+    }
+    .btn:hover { background: var(--saffron); transform: translateY(-2px); }
+    .btn:active { transform: translateY(0); }
+    .btn .arrow { display: inline-block; transition: transform 220ms ease; margin-left: 0.5rem; }
+    .btn:hover .arrow { transform: translateX(6px); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--ink);
+      box-shadow: none;
+      font-size: 1rem;
+      padding: 0.75rem 1.5rem;
+    }
+    .btn-ghost:hover { background: var(--ink); color: var(--paper); transform: translateY(-2px); }
+    .btn-ghost:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-sm {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 0.5rem 1rem;
+      font-style: normal;
+    }
+
+    /* ── Section heads ──────────────────────────────────────── */
+    .section-head {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 1rem;
+      align-items: baseline;
+      border-bottom: 1px solid var(--ink);
+      padding-bottom: 0.5rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+    .section-head h2 {
+      font-family: var(--serif-display);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 2rem;
+      letter-spacing: -0.01em;
+      text-transform: none;
+      color: var(--ink);
+    }
+
+    /* ── Empty state cards ──────────────────────────────────── */
+    .empty {
+      border: 1px solid var(--rule);
+      padding: clamp(2rem, 5vw, 4rem);
+      text-align: center;
+      background: rgba(244, 237, 225, 0.55);
+    }
+    .empty h3 {
+      font-family: var(--serif-display);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .empty p {
+      color: var(--ink-soft);
+      max-width: 50ch;
+      margin: 0 auto 1.75rem;
+    }
+
+    /* ── Assessment ─────────────────────────────────────────── */
+    .progress-bar {
+      height: 1px;
+      background: var(--rule);
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    .progress-bar::before {
+      content: "";
+      position: absolute; left: 0; top: -1px; height: 3px;
+      background: var(--saffron);
+      width: var(--progress, 0%);
+      transition: width 480ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .question {
+      display: grid;
+      gap: 1.5rem;
+      padding: 2rem 0;
+      border-bottom: 1px solid var(--rule);
+      animation: fadein 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .q-num {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+    .q-text {
+      font-family: var(--serif-display);
+      font-weight: 400;
+      font-size: clamp(1.5rem, 3vw, 2.1rem);
+      line-height: 1.2;
+      max-width: 26ch;
+    }
+    .options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+    .option {
+      cursor: pointer;
+      border: 1px solid var(--rule);
+      padding: 1.1rem 1.25rem;
+      display: flex; align-items: center; gap: 1rem;
+      transition: border-color 200ms ease, background 200ms ease, transform 200ms ease;
+      background: rgba(244, 237, 225, 0.55);
+    }
+    .option:hover { border-color: var(--ink); transform: translateY(-2px); }
+    .option input { display: none; }
+    .option .marker {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 1px solid var(--ink-faint);
+      flex-shrink: 0;
+      transition: background 200ms ease, border-color 200ms ease;
+    }
+    .option.selected { border-color: var(--ink); background: var(--paper-tint); }
+    .option.selected .marker { background: var(--saffron); border-color: var(--saffron); }
+    .option .label { font-size: 1.05rem; }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding-top: 1rem;
+    }
+
+    /* ── Result ─────────────────────────────────────────────── */
+    .verdict {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(2rem, 5vw, 4rem);
+      align-items: start;
+    }
+    @media (max-width: 820px) { .verdict { grid-template-columns: 1fr; } }
+
+    .verdict h3 {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 0.75rem;
+    }
+    .constitution {
+      font-family: var(--serif-display);
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-weight: 300;
+      font-style: italic;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      text-transform: capitalize;
+    }
+    .confidence {
+      margin-top: 1rem;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--ink-soft);
+      letter-spacing: 0.06em;
+    }
+
+    .bars { display: grid; gap: 1.25rem; }
+    .bar {
+      display: grid;
+      grid-template-columns: 5rem 1fr 4rem;
+      gap: 1rem;
+      align-items: center;
+    }
+    .bar-label {
+      font-family: var(--serif-display);
+      font-style: italic;
+      font-size: 1.25rem;
+    }
+    .bar-track {
+      height: 4px;
+      background: var(--rule);
+      position: relative;
+      overflow: hidden;
+    }
+    .bar-fill {
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 0;
+      transition: width 1200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .bar.vata  .bar-fill { background: var(--indigo);  }
+    .bar.pitta .bar-fill { background: var(--saffron); }
+    .bar.kapha .bar-fill { background: var(--clay);    }
+    .bar-pct {
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      text-align: right;
+      color: var(--ink-soft);
+    }
+
+    .recs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+    .rec-card {
+      border: 1px solid var(--rule);
+      padding: 1.75rem;
+      background: rgba(244, 237, 225, 0.55);
+    }
+    .rec-card h4 {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--saffron);
+      margin-bottom: 1rem;
+    }
+    .rec-card ul { list-style: none; display: grid; gap: 0.5rem; }
+    .rec-card li {
+      padding-left: 1rem;
+      position: relative;
+      line-height: 1.4;
+      font-size: 0.95rem;
+      color: var(--ink-soft);
+    }
+    .rec-card li::before {
+      content: "—";
+      position: absolute; left: 0; top: 0;
+      color: var(--saffron);
+    }
+
+    .ml-receipt {
+      border-top: 1px solid var(--ink);
+      padding-top: 1.5rem;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+    }
+    .ml-receipt h4 {
+      font-family: var(--serif-display);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 1.5rem;
+      color: var(--ink);
+      margin-bottom: 1rem;
+      letter-spacing: -0.01em;
+    }
+    .ml-receipt table { width: 100%; border-collapse: collapse; }
+    .ml-receipt th, .ml-receipt td {
+      text-align: left;
+      padding: 0.5rem 1rem 0.5rem 0;
+      border-bottom: 1px dotted var(--rule);
+      font-weight: 400;
+    }
+    .ml-receipt th {
+      font-size: 0.66rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+    .ml-receipt tr.winner td { color: var(--saffron); font-weight: 500; }
+
+    /* ── Diet plan / Lifestyle pages ─────────────────────────── */
+    .columns-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .meal-card {
+      border: 1px solid var(--rule);
+      padding: 1.75rem;
+      background: rgba(244, 237, 225, 0.55);
+      display: grid;
+      gap: 1rem;
+    }
+    .meal-card .when {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--saffron);
+    }
+    .meal-card h3 {
+      font-family: var(--serif-display);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 1.65rem;
+      letter-spacing: -0.01em;
+    }
+    .meal-card p { color: var(--ink-soft); font-size: 0.95rem; line-height: 1.5; }
+
+    .pill-list {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      list-style: none;
+    }
+    .pill-list li {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      padding: 0.4rem 0.8rem;
+      border: 1px solid var(--rule);
+      color: var(--ink-soft);
+      background: var(--paper-tint);
+    }
+    .pill-list li::before { content: ""; }
+    .pill-list.favor li { border-color: var(--moss); color: var(--moss); }
+    .pill-list.avoid li { border-color: var(--saffron); color: var(--saffron); text-decoration: line-through; text-decoration-color: rgba(201, 98, 28, 0.5); }
+
+    .timeline {
+      display: grid;
+      gap: 1rem;
+      border-left: 2px solid var(--rule);
+      padding-left: 2rem;
+      margin-top: 1rem;
+    }
+    .timeline-step {
+      position: relative;
+      padding: 0.75rem 0;
+    }
+    .timeline-step::before {
+      content: "";
+      position: absolute; left: -2.5rem; top: 1.25rem;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--paper); border: 2px solid var(--saffron);
+    }
+    .timeline-step .time {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 0.25rem;
+    }
+    .timeline-step h4 {
+      font-family: var(--serif-display);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 1.3rem;
+      color: var(--ink);
+      margin-bottom: 0.25rem;
+    }
+    .timeline-step p {
+      font-size: 0.95rem;
+      color: var(--ink-soft);
+      line-height: 1.5;
+    }
+
+    /* ── AI Assistant chat ──────────────────────────────────── */
+    .chat-shell {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .chat-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .chat-tabs button {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 220ms ease, border-color 220ms ease;
+    }
+    .chat-tabs button:hover { color: var(--ink); }
+    .chat-tabs button.active {
+      color: var(--ink);
+      border-bottom-color: var(--saffron);
+    }
+    .chat-pane { display: none; }
+    .chat-pane.active { display: grid; gap: 1.25rem; }
+
+    .chat-window {
+      border: 1px solid var(--rule);
+      background: rgba(244, 237, 225, 0.55);
+      min-height: 360px;
+      max-height: 60vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      display: grid;
+      gap: 1rem;
+      align-content: start;
+    }
+    .msg {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 0.75rem;
+      align-items: start;
+      animation: fadein 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .msg .who {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      padding-top: 0.25rem;
+    }
+    .msg .body {
+      font-size: 0.98rem;
+      line-height: 1.5;
+      color: var(--ink);
+    }
+    .msg.assistant .body { color: var(--ink-soft); }
+    .msg .body p + p { margin-top: 0.5rem; }
+    .msg.thinking .body { color: var(--ink-faint); font-style: italic; }
+
+    .quick-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .quick-actions button {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      padding: 0.5rem 0.9rem;
+      border: 1px solid var(--rule);
+      background: transparent;
+      color: var(--ink-soft);
+      cursor: pointer;
+      transition: border-color 200ms ease, color 200ms ease;
+    }
+    .quick-actions button:hover { border-color: var(--ink); color: var(--ink); }
+
+    .chat-input-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.5rem;
+    }
+    .chat-input-row input, .chat-input-row textarea {
+      font-family: var(--serif-body);
+      font-size: 1rem;
+      padding: 0.85rem 1rem;
+      background: var(--paper-tint);
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      resize: vertical;
+    }
+    .chat-input-row input:focus, .chat-input-row textarea:focus {
+      outline: none; border-color: var(--ink);
+    }
+
+    /* ── History / Progress ─────────────────────────────────── */
+    .history-list {
+      display: grid;
+      gap: 1rem;
+    }
+    .history-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 1.5rem;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      border: 1px solid var(--rule);
+      background: rgba(244, 237, 225, 0.55);
+      transition: border-color 200ms ease;
+    }
+    .history-item:hover { border-color: var(--ink); }
+    .history-item .when {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+    .history-item .what {
+      font-family: var(--serif-display);
+      font-style: italic;
+      font-size: 1.4rem;
+      color: var(--ink);
+      text-transform: capitalize;
+    }
+    .history-item .mini-bars {
+      display: grid;
+      grid-auto-flow: column;
+      gap: 0.4rem;
+    }
+    .history-item .mini-bar {
+      width: 2.5rem;
+      height: 4px;
+      background: var(--rule);
+      position: relative;
+      overflow: hidden;
+    }
+    .history-item .mini-bar::before {
+      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: var(--w);
+    }
+    .history-item .mini-bar.vata::before  { background: var(--indigo);  }
+    .history-item .mini-bar.pitta::before { background: var(--saffron); }
+    .history-item .mini-bar.kapha::before { background: var(--clay);    }
+    .history-item .delete {
+      background: transparent; border: none; color: var(--ink-faint);
+      cursor: pointer; font-family: var(--mono); font-size: 0.72rem;
+      padding: 0.25rem 0.5rem;
+    }
+    .history-item .delete:hover { color: var(--saffron); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0;
+      border: 1px solid var(--rule);
+      background: rgba(244, 237, 225, 0.55);
+    }
+    .stat {
+      padding: 1.5rem 1.75rem;
+      border-right: 1px solid var(--rule);
+    }
+    .stat:last-child { border-right: none; }
+    @media (max-width: 600px) {
+      .stat:not(:last-child) { border-right: none; border-bottom: 1px solid var(--rule); }
+    }
+    .stat .label {
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 0.5rem;
+    }
+    .stat .value {
+      font-family: var(--serif-display);
+      font-style: italic;
+      font-weight: 300;
+      font-size: 2.5rem;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .stat .sub {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--ink-soft);
+      margin-top: 0.25rem;
+      letter-spacing: 0.04em;
+    }
+
+    .sparkline-card {
+      border: 1px solid var(--rule);
+      padding: 1.5rem 1.75rem;
+      background: rgba(244, 237, 225, 0.55);
+    }
+    .sparkline-card h4 {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 1rem;
+    }
+    .sparkline-card svg { width: 100%; height: 80px; }
+
+    /* ── Disclaimer / global ────────────────────────────────── */
+    .disclaimer {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      color: var(--ink-faint);
+      text-align: center;
+      padding: 2rem 0 1rem;
+      border-top: 1px solid var(--rule);
+    }
+
+    .skip-link {
+      position: absolute;
+      left: -9999px; top: 1rem;
+      background: var(--ink); color: var(--paper);
+      padding: 0.5rem 1rem;
+      font-family: var(--mono); font-size: 0.8rem;
+      z-index: 100;
+    }
+    .skip-link:focus { left: 1rem; }
+
+    @media print {
+      body { background: white; }
+      .nav-rail, .masthead, .skip-link, .quick-actions, .chat-input-row,
+      .nav-buttons, .begin, button { display: none !important; }
+      .view { display: block !important; }
+      .rec-card, .meal-card, .empty, .stats, .sparkline-card,
+      .history-item, .chat-window { break-inside: avoid; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <div class="page">
+    <!-- Masthead -->
+    <header class="masthead" role="banner">
+      <div class="left"><span class="dot"></span>Vol. I · No. 1</div>
+      <div class="center">Prakriti</div>
+      <div class="right" id="masthead-right">A Field Guide</div>
+    </header>
+
+    <!-- Section nav rail -->
+    <nav class="nav-rail" role="navigation" aria-label="Sections">
+      <button data-view="home"      class="active"><span class="num">01</span>Home</button>
+      <button data-view="assessment"><span class="num">02</span>The Reading</button>
+      <button data-view="result"    style="display:none;"><span class="num">03</span>Result</button>
+      <button data-view="diet"      ><span class="num">03</span>Diet</button>
+      <button data-view="lifestyle" ><span class="num">04</span>Lifestyle</button>
+      <button data-view="ai"        ><span class="num">05</span>Assistant</button>
+      <button data-view="history"   ><span class="num">06</span>History</button>
+    </nav>
+
+    <main id="main">
+      <!-- ─────────── Home ─────────── -->
+      <section class="view active" id="view-home" aria-labelledby="hero-h1">
+        <div class="hero">
+          <div>
+            <h1 id="hero-h1">What is your <em>nature</em>?</h1>
+            <p class="lede">A short, fifteen-question reading drawn from the Ayurvedic constitutional tradition. The model that answers it was trained on five thousand labelled assessments and runs entirely in your browser. No accounts, no servers, no record of what you say here.</p>
+          </div>
+
+          <div class="dosha-trio" aria-hidden="true">
+            <article class="glyph-card">
+              <svg viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="1.2" style="color: var(--indigo);">
+                <path d="M10 30 Q 18 12, 30 30 T 50 30" stroke-linecap="round"/>
+                <path d="M10 38 Q 18 20, 30 38 T 50 38" stroke-linecap="round" opacity="0.5"/>
+                <path d="M10 22 Q 18 4, 30 22 T 50 22" stroke-linecap="round" opacity="0.3"/>
+              </svg>
+              <h3>Vata</h3>
+              <p>Air · Ether</p>
+            </article>
+            <article class="glyph-card">
+              <svg viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="1.2" style="color: var(--saffron);">
+                <path d="M30 50 C 16 38, 18 22, 30 10 C 42 22, 44 38, 30 50 Z" stroke-linejoin="round"/>
+                <path d="M30 42 C 24 36, 24 28, 30 22 C 36 28, 36 36, 30 42 Z" opacity="0.5"/>
+              </svg>
+              <h3>Pitta</h3>
+              <p>Fire · Water</p>
+            </article>
+            <article class="glyph-card">
+              <svg viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="1.2" style="color: var(--clay);">
+                <circle cx="30" cy="30" r="18"/>
+                <circle cx="30" cy="30" r="11" opacity="0.5"/>
+                <circle cx="30" cy="30" r="4" fill="currentColor" stroke="none"/>
+              </svg>
+              <h3>Kapha</h3>
+              <p>Earth · Water</p>
+            </article>
+          </div>
+
+          <div class="begin">
+            <div class="meta">
+              <span id="model-summary">Loading classifier…</span>
+            </div>
+            <button class="btn" id="begin-btn">Begin the reading <span class="arrow">→</span></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── Assessment ─────────── -->
+      <section class="view" id="view-assessment" aria-labelledby="assessment-head">
+        <div class="section-head">
+          <span>Part Two</span>
+          <h2 id="assessment-head">The questions</h2>
+          <span><span id="q-counter">0/15</span></span>
+        </div>
+        <div class="progress-bar" aria-hidden="true"></div>
+        <div id="question-container"></div>
+        <div class="nav-buttons">
+          <button class="btn btn-ghost" id="prev-btn" disabled>← Previous</button>
+          <button class="btn" id="next-btn">Next →</button>
+        </div>
+      </section>
+
+      <!-- ─────────── Result ─────────── -->
+      <section class="view" id="view-result" aria-labelledby="result-head">
+        <div class="section-head">
+          <span>Part Three</span>
+          <h2 id="result-head">The reading</h2>
+          <span id="result-stamp"></span>
+        </div>
+
+        <div class="verdict">
+          <div>
+            <h3>Your constitution</h3>
+            <div class="constitution" id="constitution-name">—</div>
+            <div class="confidence" id="confidence-text"></div>
+            <div class="ml-receipt" style="margin-top: 2.5rem;">
+              <h4>How this was decided</h4>
+              <p id="model-explanation"></p>
+              <table id="bakeoff-table" style="margin-top: 1rem;">
+                <thead><tr><th>Model</th><th>Accuracy</th><th>Macro F1</th></tr></thead>
+                <tbody id="bakeoff-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <h3>Distribution</h3>
+            <div class="bars">
+              <div class="bar vata">
+                <span class="bar-label">Vata</span>
+                <div class="bar-track"><div class="bar-fill" id="bar-vata"></div></div>
+                <span class="bar-pct" id="pct-vata">0%</span>
+              </div>
+              <div class="bar pitta">
+                <span class="bar-label">Pitta</span>
+                <div class="bar-track"><div class="bar-fill" id="bar-pitta"></div></div>
+                <span class="bar-pct" id="pct-pitta">0%</span>
+              </div>
+              <div class="bar kapha">
+                <span class="bar-label">Kapha</span>
+                <div class="bar-track"><div class="bar-fill" id="bar-kapha"></div></div>
+                <span class="bar-pct" id="pct-kapha">0%</span>
+              </div>
+            </div>
+
+            <div style="margin-top: 2.5rem;">
+              <h3>Recommendations</h3>
+              <div class="recs" id="recs"></div>
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+              <button class="btn btn-ghost btn-sm" data-jump="diet">Read full diet plan →</button>
+              <button class="btn btn-ghost btn-sm" data-jump="lifestyle">See lifestyle guidance →</button>
+              <button class="btn btn-ghost btn-sm" id="restart-btn">Take it again</button>
+              <button class="btn btn-ghost btn-sm" id="copy-btn">Copy result</button>
+              <button class="btn btn-ghost btn-sm" onclick="window.print()">Print</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── Diet ─────────── -->
+      <section class="view" id="view-diet" aria-labelledby="diet-head">
+        <div class="section-head">
+          <span>Part Four</span>
+          <h2 id="diet-head">A plan for the table</h2>
+          <span id="diet-dosha-stamp">—</span>
+        </div>
+        <div id="diet-body"></div>
+      </section>
+
+      <!-- ─────────── Lifestyle ─────────── -->
+      <section class="view" id="view-lifestyle" aria-labelledby="lifestyle-head">
+        <div class="section-head">
+          <span>Part Five</span>
+          <h2 id="lifestyle-head">A plan for the day</h2>
+          <span id="lifestyle-dosha-stamp">—</span>
+        </div>
+        <div id="lifestyle-body"></div>
+      </section>
+
+      <!-- ─────────── AI Assistant ─────────── -->
+      <section class="view" id="view-ai" aria-labelledby="ai-head">
+        <div class="section-head">
+          <span>Part Six</span>
+          <h2 id="ai-head">Conversation</h2>
+          <span id="ai-status">Offline</span>
+        </div>
+
+        <div class="chat-shell">
+          <div class="chat-tabs" role="tablist">
+            <button role="tab" data-tab="chat" class="active">Chat</button>
+            <button role="tab" data-tab="symptoms">Symptom analysis</button>
+            <button role="tab" data-tab="insights">Insights</button>
+          </div>
+
+          <!-- Chat tab -->
+          <div class="chat-pane active" data-pane="chat" role="tabpanel">
+            <div class="chat-window" id="chat-window" aria-live="polite">
+              <div class="msg assistant">
+                <span class="who">A.</span>
+                <div class="body">
+                  <p>Hello. I can answer questions about Ayurvedic concepts, your constitution, food and routine. I work best after you have completed a reading — I will tailor my responses to it.</p>
+                  <p>To use the live model, set <code>window.PRAKRITI_AI_PROXY_URL</code> to your serverless proxy endpoint. Without it I will fall back to a deterministic local guide based on the rule-based knowledge bundled in the page.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="quick-actions" id="chat-quick-actions">
+              <button data-q="What does my constitution mean?">My constitution</button>
+              <button data-q="What should I eat for breakfast?">Breakfast ideas</button>
+              <button data-q="How can I sleep better?">Better sleep</button>
+              <button data-q="What is the daily routine for my dosha?">Daily routine</button>
+              <button data-q="How do I manage stress?">Stress relief</button>
+            </div>
+
+            <div class="chat-input-row">
+              <input type="text" id="chat-input" placeholder="Ask anything about your constitution, diet, or routine…" autocomplete="off">
+              <button class="btn btn-sm" id="chat-send">Send</button>
+            </div>
+          </div>
+
+          <!-- Symptoms tab -->
+          <div class="chat-pane" data-pane="symptoms" role="tabpanel">
+            <div class="chat-input-row" style="grid-template-columns: 1fr;">
+              <textarea id="symptoms-input" rows="6" placeholder="Describe what you have been experiencing — duration, intensity, when it gets better or worse. The more detail you give, the more useful the dosha-imbalance hypothesis will be."></textarea>
+            </div>
+            <div style="display:flex; justify-content: flex-end;">
+              <button class="btn btn-sm" id="symptoms-analyze">Analyse</button>
+            </div>
+            <div id="symptoms-result"></div>
+          </div>
+
+          <!-- Insights tab -->
+          <div class="chat-pane" data-pane="insights" role="tabpanel">
+            <div id="insights-body"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── History ─────────── -->
+      <section class="view" id="view-history" aria-labelledby="history-head">
+        <div class="section-head">
+          <span>Part Seven</span>
+          <h2 id="history-head">Past readings</h2>
+          <span id="history-count">0 readings</span>
+        </div>
+
+        <div id="history-body"></div>
+      </section>
+
+      <p class="disclaimer">
+        For curiosity and self-reflection only. Not a medical assessment, diagnosis, or treatment plan. Consult a qualified practitioner for clinical concerns. — All data stays on this device; clearing your browser storage erases your history.
+      </p>
+    </main>
+  </div>
+
+  <!-- Inline app data -->
+  <script>
+    const QUESTIONS = [
+      { feature: "Body Frame", text: "How would you describe your body frame?",
+        options: ["Thin and lean, with prominent joints", "Medium and well-proportioned", "Sturdy and well-built, broad-shouldered"] },
+      { feature: "Body Weight", text: "Which best describes your weight tendency?",
+        options: ["Tend to be underweight; gain weight slowly", "Maintain a stable weight easily", "Tend toward overweight; gain weight easily"] },
+      { feature: "Skin", text: "How does your skin usually feel?",
+        options: ["Dry, rough, sometimes flaky", "Soft, with a tendency to sweat", "Moist and slightly oily"] },
+      { feature: "Type of Hair", text: "What is your hair like in its natural state?",
+        options: ["Dry; can be brittle or coarse", "Normal; fine to medium", "Naturally oily, thick, lustrous"] },
+      { feature: "Memory", text: "How does your memory tend to work?",
+        options: ["Quick to learn, quick to forget", "Sharp and selective", "Slow to learn, but holds for the long run"] },
+      { feature: "Mental Activity", text: "How does your mind tend to operate?",
+        options: ["Restless, jumps between ideas", "Decisive, sometimes intense or aggressive", "Steady and stable, occasionally slow"] },
+      { feature: "Reaction under Adverse Situations", text: "When things go wrong, you tend to feel:",
+        options: ["Anxious or worried", "Irritated or angry", "Calm and unbothered"] },
+      { feature: "Sleep Pattern", text: "How would you describe your sleep?",
+        options: ["Light; wake easily", "Moderate; consistent", "Deep and long; can oversleep"] },
+      { feature: "Body Energy", text: "How is your physical energy?",
+        options: ["Comes in bursts, then crashes", "Strong and focused", "High and consistent stamina"] },
+      { feature: "Eating Habit", text: "How do you typically eat?",
+        options: ["Irregularly; sometimes too quickly", "On a steady schedule, with full attention", "Slowly and thoroughly; can over-eat"] },
+      { feature: "Hunger", text: "How does your hunger usually present?",
+        options: ["Variable; often forget meals", "Sharp and sudden; dislike skipping", "Mild and steady; can skip easily"] },
+      { feature: "Pace of Performing Work", text: "How do you tend to work?",
+        options: ["Quickly, with bursts of energy", "Methodically, at a strong steady pace", "Slowly and deliberately"] },
+      { feature: "Weather Conditions", text: "Which weather do you dislike most?",
+        options: ["Cold and dry", "Hot and humid", "Damp and wet"] },
+      { feature: "Social Relations", text: "Socially, you would describe yourself as:",
+        options: ["More introverted; energy from solitude", "Selective; energy from focused groups", "Outgoing; energy from many people"] },
+      { feature: "Sleep Pattern", text: "When tired, you most often need:",
+        options: ["A short nap or quiet stillness", "A meal and a brief rest", "A long, deep sleep"] },
+    ];
+
+    const REC_DB = {
+      vata: {
+        diet: ["Warm, cooked, slightly oily foods", "Sweet, sour, and salty tastes", "Soups, stews, root vegetables", "Avoid raw salads when cold or windy"],
+        lifestyle: ["Keep a regular routine, especially sleep", "Self-massage with warm sesame oil", "Stay warm; avoid wind and over-exertion", "Slow, grounding movement: yin yoga, walking"],
+        avoid: ["Cold drinks, frozen foods", "Excessive caffeine and stimulants", "Travel-heavy or erratic schedules", "Skipping meals"],
+      },
+      pitta: {
+        diet: ["Cooling foods: cucumber, leafy greens, sweet fruits", "Sweet, bitter, astringent tastes", "Coconut, mint, fennel, coriander", "Avoid very spicy or fried foods"],
+        lifestyle: ["Avoid the midday sun (10 am–2 pm)", "Cool-down practices: swimming, moonlight walks", "Don't skip meals; lunch should be the largest", "Cultivate patience; avoid arguments when hungry"],
+        avoid: ["Excess alcohol and red meat", "Overheating yourself or your room", "Working through hunger or anger", "Sour, salty, or fermented foods in excess"],
+      },
+      kapha: {
+        diet: ["Light, warm, dry, well-spiced foods", "Pungent, bitter, astringent tastes", "Plenty of leafy greens, beans, ginger", "Avoid heavy dairy, fried, and very sweet foods"],
+        lifestyle: ["Vigorous, daily movement — running, dance, vinyasa", "Wake before dawn; avoid daytime naps", "Vary your routine to prevent stagnation", "Dry brushing and energising breath practices"],
+        avoid: ["Cold, heavy, oily food", "Excessive sweet snacks", "Long periods of sitting", "Oversleeping"],
+      },
+    };
+
+    // Detailed diet plan: meal-by-meal guidance per dosha
+    const DIET_PLAN = {
+      vata: {
+        principle: "Steady, warm, well-oiled meals on a predictable rhythm. Vata's nature is movement and dryness, which a kitchen rich in cooked grains, ghee, and warming spices balances.",
+        meals: [
+          { when: "On waking", title: "Warm water with lemon or ginger", body: "A small cup, sipped slowly. Wakes digestion without shocking it." },
+          { when: "Breakfast (7–8)", title: "Cooked oats with stewed fruit", body: "Add cardamom, ghee, and a pinch of salt. Avoid cold cereals and dry toast — both aggravate the airy quality." },
+          { when: "Lunch (12–1, largest meal)", title: "Kitchari with seasonal root vegetables", body: "Basmati rice and split mung dal cooked together with cumin, fennel, ginger. The most balancing single dish in the Ayurvedic kitchen." },
+          { when: "Afternoon (3–4)", title: "Spiced chai or warm almond milk", body: "Add cinnamon and a few soaked almonds (skins off). Resists the late-afternoon Vata crash." },
+          { when: "Dinner (6–7)", title: "Light vegetable soup with rice", body: "Lighter than lunch but still warm and oily. Avoid raw salads after sundown." },
+        ],
+        favor: ["Ghee", "Sesame oil", "Cooked grains", "Sweet fruits", "Almonds (soaked)", "Warm milk", "Ginger", "Cardamom"],
+        avoid:  ["Cold drinks", "Raw vegetables", "Crackers and dry toast", "Caffeine excess", "Bitter greens (in excess)", "Carbonated drinks"],
+      },
+      pitta: {
+        principle: "Cool, well-hydrated, generous in sweet and bitter tastes. Pitta runs hot, sharp, and slightly oily; the goal is to soothe and slow the fire without dampening it.",
+        meals: [
+          { when: "On waking", title: "Room-temperature water with a wedge of lime", body: "Avoid hot water and lemon, which can be too sour and heating early in the day." },
+          { when: "Breakfast (7–8)", title: "Cooked grains with sweet fruit", body: "Oats with maple, fresh figs, dates, or pears. Avoid acidic fruits like grapefruit and citrus first thing." },
+          { when: "Lunch (12–1, largest meal)", title: "Basmati rice with seasonal greens", body: "Add coconut, coriander, fennel. Skipping lunch is the single biggest mistake a Pitta can make." },
+          { when: "Afternoon (3–4)", title: "Coconut water or mint-fennel tea", body: "Cooling, hydrating, and prevents the irritability that comes with hunger." },
+          { when: "Dinner (6–7)", title: "Mung dal soup with steamed greens", body: "Light and cooling. Heavy or fried food at dinner reliably disrupts Pitta sleep." },
+        ],
+        favor: ["Coconut", "Cucumber", "Sweet fruits", "Leafy greens", "Mint", "Fennel", "Coriander", "Basmati rice"],
+        avoid:  ["Chilli and very hot spices", "Sour fruits in excess", "Red meat", "Alcohol", "Fermented foods (in excess)", "Tomatoes and vinegar (in excess)"],
+      },
+      kapha: {
+        principle: "Light, dry, well-spiced, eaten when genuinely hungry. Kapha holds heaviness and moisture; the kitchen counters with pungent, bitter, and astringent tastes.",
+        meals: [
+          { when: "On waking", title: "Hot water with ginger and honey", body: "Once water is no longer hot, stir in raw honey. The combination is classically prescribed for Kapha." },
+          { when: "Breakfast (often skipped or light)", title: "Stewed apples or a small bowl of barley", body: "Kaphas often do not need a heavy breakfast. If you do eat, keep it warm and light." },
+          { when: "Lunch (12–1, largest meal)", title: "Kitchari with leafy greens, plenty of spice", body: "Generous black pepper, ginger, turmeric. Vegetables sautéed rather than steamed." },
+          { when: "Afternoon (3–4)", title: "Ginger tea, no snack if not hungry", body: "Kaphas rarely benefit from grazing. Honour the gap." },
+          { when: "Dinner (5–6, very light)", title: "Vegetable soup with barley or millet", body: "Eat early. Heavy late dinners are the source of most chronic Kapha imbalances." },
+        ],
+        favor: ["Barley", "Millet", "Beans", "Leafy greens", "Berries", "Apples", "Black pepper", "Ginger", "Turmeric"],
+        avoid:  ["Cheese and heavy dairy", "Fried foods", "Cold drinks", "Sweet snacks", "Excess wheat", "Bananas", "Avocado (in excess)"],
+      },
+    };
+
+    // Daily routine (Dinacharya) per dosha
+    const LIFESTYLE_PLAN = {
+      vata: {
+        principle: "Vata is balanced by rhythm, warmth, and grounding. The single most powerful intervention is a consistent sleep and meal schedule.",
+        timeline: [
+          { time: "5:30 – 6:00", title: "Rise gently", body: "Avoid jolting alarms. Sit on the edge of the bed for a moment before standing." },
+          { time: "6:00 – 6:30", title: "Warm water, oil massage (Abhyanga)", body: "A 5–10 minute self-massage with warm sesame oil settles Vata more reliably than any supplement." },
+          { time: "6:30 – 7:00", title: "Slow movement", body: "Yin yoga, walking, gentle Surya Namaskar. Avoid intense cardio early." },
+          { time: "7:30 – 8:00", title: "Warm, cooked breakfast", body: "Eat sitting down, without phones. Vata digests poorly when distracted." },
+          { time: "12:30 – 13:00", title: "Largest meal, cooked and warm", body: "Take 20 minutes. Resist eating at the desk." },
+          { time: "18:00 – 19:00", title: "Light dinner", body: "Soup, rice, cooked vegetables. Avoid raw salads after dark." },
+          { time: "21:30 – 22:00", title: "Wind down", body: "Warm milk with nutmeg, dim lights, no screens after 22:00 if possible." },
+          { time: "22:00", title: "Sleep", body: "Same time every night. Vata especially benefits from consistency." },
+        ],
+        practices: ["Warm sesame oil massage 3–5×/week", "Restorative yoga", "Pranayama: Nadi Shodhana (alternate-nostril breathing)", "Avoid overstimulation, multitasking, screen overuse"],
+      },
+      pitta: {
+        principle: "Pitta is balanced by coolness, moderation, and refusing to skip meals. Schedule the most demanding work for late morning when Pitta is naturally focused.",
+        timeline: [
+          { time: "6:00 – 6:30", title: "Rise without a fight", body: "Splash cool water on the face. Avoid checking news or work email immediately." },
+          { time: "6:30 – 7:00", title: "Cooling self-massage with coconut oil", body: "Especially effective in summer. Cools the head and chest before the day heats up." },
+          { time: "7:00 – 7:30", title: "Moderate cardio or swimming", body: "Pitta thrives on intense exercise but should keep it cool — water-based or shaded." },
+          { time: "7:45 – 8:15", title: "Sweet, cooling breakfast", body: "Stewed fruit, oats, no acidic citrus first thing." },
+          { time: "12:00 – 13:00", title: "The largest, most important meal", body: "Skipping or delaying lunch is the most common Pitta mistake." },
+          { time: "15:00 – 16:00", title: "Cooling beverage", body: "Coconut water, mint tea. Prevents the 4pm irritability." },
+          { time: "18:00 – 19:00", title: "Light, cool dinner", body: "Mung dal, basmati, steamed greens. Avoid hot, spicy, or fried food." },
+          { time: "22:00 – 22:30", title: "Sleep", body: "Avoid working past 21:00; Pitta is wired and will not switch off." },
+        ],
+        practices: ["Moonlight walks", "Swimming or surfing", "Pranayama: Sheetali (cooling breath)", "Forgive easily; resentment burns Pitta first"],
+      },
+      kapha: {
+        principle: "Kapha is balanced by stimulation, novelty, and rising before dawn. The first two hours of the day determine the mood of the rest.",
+        timeline: [
+          { time: "5:00 – 5:30", title: "Rise before sunrise", body: "Kapha hours are 6–10am; sleeping into them creates heaviness all day." },
+          { time: "5:30 – 6:00", title: "Vigorous dry brushing or warm shower", body: "Stimulates lymph and breaks up morning sluggishness." },
+          { time: "6:00 – 6:45", title: "Strong cardio or vinyasa", body: "Sweat. Kaphas should exercise hardest of the three doshas, daily." },
+          { time: "7:30 – 8:00", title: "Skip or have a very light breakfast", body: "If hungry: stewed apple, ginger tea. Most Kaphas do better without breakfast." },
+          { time: "12:00 – 13:00", title: "Main meal, light and well-spiced", body: "Kitchari with strong spicing. Sit upright; avoid heavy social lunches." },
+          { time: "15:00 – 16:00", title: "Brisk walk", body: "Counteracts the post-lunch slump. Avoid napping." },
+          { time: "17:30 – 18:00", title: "Very light early dinner", body: "Vegetable soup, before sundown ideally." },
+          { time: "21:30 – 22:00", title: "Sleep", body: "Avoid sleeping in. The single most transformative habit for Kapha is an early alarm." },
+        ],
+        practices: ["Daily vigorous exercise — non-negotiable", "Try new routes, new foods, new people regularly", "Pranayama: Bhastrika (bellows breath)", "Fast one day a week if your doctor approves"],
+      },
+    };
+  </script>
+
+  <!-- Classifier scripts -->
+  <script src="prakriti_classifier.js"></script>
+  <script src="real_prakriti_model.js"></script>
+  <script src="advanced_prakriti_model.js"></script>
+  <script src="ayurvedic_feature_enhancer.js"></script>
+
+  <!-- App logic -->
+  <script src="app.js"></script>
+
+  <!-- Service worker -->
+  <script>
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
