@@ -193,14 +193,36 @@
       position: relative;
       border-radius: var(--r-xl);
       overflow: hidden;
-      background: linear-gradient(135deg, #FFFCF9 0%, #FFF6E8 100%);
+      background: linear-gradient(135deg, #FFFCF9 0%, #FFF6E8 50%, #FBE9CC 100%);
       border: 1px solid var(--border);
-      padding: clamp(3rem,6vw,5rem) clamp(1.5rem,5vw,4rem);
-      min-height: 480px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+      padding: clamp(2.5rem,5vw,4.5rem) clamp(2rem,5vw,4rem);
       box-shadow: var(--shadow-md);
+    }
+    .hero-grid {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: clamp(2rem,5vw,4rem);
+      align-items: center;
+    }
+    @media (max-width: 880px) {
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-art { order: -1; max-width: 280px; margin: 0 auto; }
+    }
+    .hero-art { display: flex; align-items: center; justify-content: center; }
+    .mandala {
+      width: 100%;
+      max-width: 420px;
+      height: auto;
+      filter: drop-shadow(0 12px 32px rgba(218,110,11,0.18));
+      animation: mandala-spin 60s linear infinite;
+    }
+    .mandala .ring-outer { animation: mandala-counter 80s linear infinite; transform-origin: 200px 200px; }
+    @keyframes mandala-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes mandala-counter { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .mandala, .mandala .ring-outer { animation: none; }
     }
 
     /* Botanical corner SVG decorations */
@@ -233,48 +255,57 @@
       66%      { transform: translate(-12px,10px) scale(0.97); }
     }
 
-    .hero-content { position: relative; z-index: 1; max-width: 620px; }
+    .hero-content { position: relative; z-index: 1; }
     .hero-eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
       background: rgba(218,110,11,0.10);
       border: 1px solid rgba(218,110,11,0.28);
-      border-radius: var(--r);
-      padding: 0.35rem 1rem;
-      font-size: 0.78rem;
+      border-radius: 100px;
+      padding: 0.4rem 1rem;
+      font-size: 0.74rem;
       font-weight: 500;
       color: var(--orange);
-      margin-bottom: 1.5rem;
-      letter-spacing: 0.02em;
+      margin-bottom: 1.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
-    .hero-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); }
+    .hero-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
     .hero h1 {
       font-family: var(--serif);
       font-weight: 700;
-      font-size: clamp(2.4rem,5.5vw,4.2rem);
-      line-height: 1.15;
+      font-size: clamp(2.4rem,5.2vw,4rem);
+      line-height: 1.1;
       letter-spacing: -0.02em;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
       color: var(--brown);
+    }
+    .hero h1 em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--teal);
     }
     .hero h1 .gradient-text {
       background: var(--g-cta);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-    }
-    .hero-sub {
-      font-size: 1rem;
-      color: var(--text-2);
-      line-height: 1.7;
-      max-width: 50ch;
-      margin-bottom: 2rem;
+      font-style: italic;
       font-weight: 400;
     }
-    .hero-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 2.5rem; }
-    .hero-meta { font-family: var(--mono); font-size: 0.7rem; color: var(--text-3); letter-spacing: 0.04em; }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--text-2);
+      line-height: 1.75;
+      max-width: 52ch;
+      margin-bottom: 2.25rem;
+      font-weight: 400;
+    }
+    .hero-actions { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 2.25rem; }
+    .hero-meta { font-family: var(--mono); font-size: 0.72rem; color: var(--text-3); letter-spacing: 0.04em; }
     #model-summary { color: var(--text-3); font-size: 0.72rem; }
 
     .dosha-badges { display: flex; gap: 0.6rem; flex-wrap: wrap; }
@@ -282,8 +313,8 @@
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
-      padding: 0.35rem 0.85rem;
-      border-radius: var(--r);
+      padding: 0.35rem 0.95rem;
+      border-radius: 100px;
       background: var(--tan);
       color: var(--brown);
       font-size: 0.78rem;
@@ -293,6 +324,72 @@
     .dosha-badge.vata  .badge-dot { background: var(--vata-c); }
     .dosha-badge.pitta .badge-dot { background: var(--pitta-c); }
     .dosha-badge.kapha .badge-dot { background: var(--kapha-c); }
+
+    /* ━━ TRUST ROW ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    .trust-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.75rem 2rem;
+      background: var(--sage);
+      border-radius: var(--r-lg);
+      border: 1px solid var(--sage-2);
+    }
+    @media (max-width: 720px) {
+      .trust-row { grid-template-columns: 1fr 1fr; gap: 1.25rem; padding: 1.5rem; }
+      .trust-divider { display: none; }
+    }
+    .trust-stat { text-align: center; }
+    .trust-stat-value {
+      font-family: var(--serif);
+      font-size: clamp(1.5rem, 2.4vw, 2rem);
+      font-weight: 700;
+      color: var(--brown);
+      line-height: 1;
+      margin-bottom: 0.35rem;
+      letter-spacing: -0.02em;
+    }
+    .trust-stat-label {
+      font-size: 0.74rem;
+      color: var(--text-2);
+      letter-spacing: 0.04em;
+      font-weight: 500;
+    }
+    .trust-divider { width: 1px; height: 32px; background: var(--border-2); }
+
+    /* ━━ SECTION INTRO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    .section-intro {
+      text-align: center;
+      max-width: 640px;
+      margin: 1.5rem auto 0;
+    }
+    .section-intro-meta {
+      display: inline-block;
+      font-size: 0.74rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 0.85rem;
+    }
+    .section-intro-title {
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: clamp(1.75rem, 3.6vw, 2.6rem);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: var(--brown);
+      margin-bottom: 1rem;
+    }
+    .section-intro-title em { font-style: italic; font-weight: 400; color: var(--teal); }
+    .section-intro-sub {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--text-2);
+      max-width: 56ch;
+      margin: 0 auto;
+    }
 
     /* ━━ DOSHA CARDS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     .dosha-trio { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.25rem; }
@@ -308,7 +405,7 @@
     }
     .glyph-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); }
     .glyph-card-top {
-      height: 120px;
+      height: 160px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -319,10 +416,10 @@
     .glyph-card.pitta .glyph-card-top { background: var(--g-pitta); }
     .glyph-card.kapha .glyph-card-top { background: var(--g-kapha); }
     .glyph-card-top::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 140%, rgba(255,255,255,0.20), transparent 60%); }
-    .glyph-card svg { width: 54px; height: 54px; color: rgba(255,255,255,0.92); position: relative; z-index: 1; }
-    .glyph-card-body { padding: 1.25rem 1.5rem 1.5rem; background: var(--sage); }
-    .glyph-card h3 { font-family: var(--serif); font-size: 1.15rem; font-weight: 700; color: var(--brown); margin-bottom: 0.2rem; }
-    .glyph-card p  { font-size: 0.78rem; color: var(--text-2); font-weight: 400; }
+    .glyph-card svg { width: 76px; height: 76px; color: rgba(255,255,255,0.95); position: relative; z-index: 1; }
+    .glyph-card-body { padding: 1.5rem 1.75rem 1.75rem; background: var(--sage); }
+    .glyph-card h3 { font-family: var(--serif); font-size: 1.5rem; font-weight: 700; color: var(--brown); margin-bottom: 0.35rem; letter-spacing: -0.01em; }
+    .glyph-card p { font-size: 0.85rem; color: var(--text-2); font-weight: 500; letter-spacing: 0.02em; }
 
     /* ━━ BUTTONS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     .btn {
@@ -643,32 +740,150 @@
           <div class="hero-blobs" aria-hidden="true">
             <div class="blob blob-a"></div>
             <div class="blob blob-b"></div>
-            <div class="blob blob-c"></div>
           </div>
-          <div class="hero-content">
-            <div class="hero-eyebrow">
-              <span class="dot"></span>
-              Ayurvedic Constitution Assessment
+
+          <div class="hero-grid">
+            <div class="hero-content">
+              <div class="hero-eyebrow">
+                <span class="dot"></span>
+                Ancient Wisdom · Modern Intelligence
+              </div>
+              <h1 id="hero-h1">
+                Know your <em>dosha,</em><br>
+                live in <span class="gradient-text">harmony.</span>
+              </h1>
+              <p class="hero-sub">
+                A traditional Ayurvedic assessment refined by machine learning. Answer 15 questions about your nature and receive a personalised plan for diet, daily routine, and balance — grounded in 5,000 years of constitutional medicine.
+              </p>
+              <div class="hero-actions">
+                <button class="btn" id="begin-btn">
+                  Begin Your Reading <span class="arrow">→</span>
+                </button>
+                <span class="hero-meta" id="model-summary">Loading classifier…</span>
+              </div>
+              <div class="dosha-badges" aria-hidden="true">
+                <span class="dosha-badge vata"><span class="badge-dot"></span>Vata</span>
+                <span class="dosha-badge pitta"><span class="badge-dot"></span>Pitta</span>
+                <span class="dosha-badge kapha"><span class="badge-dot"></span>Kapha</span>
+              </div>
             </div>
-            <h1 id="hero-h1">
-              Discover your<br>
-              <span class="gradient-text">true nature</span>
-            </h1>
-            <p class="hero-sub">
-              A 15-question assessment drawn from Ayurvedic tradition, powered by an ML model trained on 5,000 labelled readings. Runs entirely in your browser — no accounts, no servers.
-            </p>
-            <div class="hero-actions">
-              <button class="btn" id="begin-btn">
-                Begin Assessment <span class="arrow">→</span>
-              </button>
-              <span class="hero-meta" id="model-summary">Loading classifier…</span>
-            </div>
-            <div class="dosha-badges" aria-hidden="true">
-              <span class="dosha-badge vata"><span class="badge-dot"></span>Vata · Air &amp; Ether</span>
-              <span class="dosha-badge pitta"><span class="badge-dot"></span>Pitta · Fire &amp; Water</span>
-              <span class="dosha-badge kapha"><span class="badge-dot"></span>Kapha · Earth &amp; Water</span>
+
+            <!-- Hero illustration: animated lotus mandala -->
+            <div class="hero-art" aria-hidden="true">
+              <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" class="mandala">
+                <defs>
+                  <radialGradient id="lotus-glow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#FCD9A8" stop-opacity="0.4"/>
+                    <stop offset="100%" stop-color="#FCD9A8" stop-opacity="0"/>
+                  </radialGradient>
+                  <linearGradient id="petal-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#DA6E0B"/>
+                    <stop offset="100%" stop-color="#C05000"/>
+                  </linearGradient>
+                  <linearGradient id="petal-grad-2" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#1C8686"/>
+                    <stop offset="100%" stop-color="#0F6464"/>
+                  </linearGradient>
+                  <linearGradient id="petal-grad-3" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#EAEED1"/>
+                    <stop offset="100%" stop-color="#C8D070"/>
+                  </linearGradient>
+                </defs>
+
+                <!-- Outer glow -->
+                <circle cx="200" cy="200" r="190" fill="url(#lotus-glow)"/>
+
+                <!-- Outer ring of small leaves (16) -->
+                <g class="ring-outer" stroke="#483934" stroke-width="1" fill="#EAEED1" opacity="0.5">
+                  <g transform="translate(200 200)">
+                    <ellipse cx="0" cy="-170" rx="6" ry="14"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(22.5)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(45)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(67.5)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(90)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(112.5)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(135)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(157.5)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(180)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(202.5)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(225)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(247.5)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(270)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(292.5)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(315)"/>
+                    <ellipse cx="0" cy="-170" rx="6" ry="14" transform="rotate(337.5)"/>
+                  </g>
+                </g>
+
+                <!-- Decorative ring -->
+                <circle cx="200" cy="200" r="148" fill="none" stroke="#483934" stroke-width="0.8" stroke-dasharray="2 4" opacity="0.35"/>
+
+                <!-- Middle petal layer (8 large) -->
+                <g class="ring-mid" stroke="#483934" stroke-width="0.8">
+                  <g transform="translate(200 200)">
+                    <path d="M0 -130 Q -22 -90, 0 -50 Q 22 -90, 0 -130 Z" fill="url(#petal-grad)" opacity="0.85"/>
+                    <path d="M0 -130 Q -22 -90, 0 -50 Q 22 -90, 0 -130 Z" fill="url(#petal-grad)" opacity="0.85" transform="rotate(45)"/>
+                    <path d="M0 -130 Q -22 -90, 0 -50 Q 22 -90, 0 -130 Z" fill="url(#petal-grad-2)" opacity="0.85" transform="rotate(90)"/>
+                    <path d="M0 -130 Q -22 -90, 0 -50 Q 22 -90, 0 -130 Z" fill="url(#petal-grad-2)" opacity="0.85" transform="rotate(135)"/>
+                    <path d="M0 -130 Q -22 -90, 0 -50 Q 22 -90, 0 -130 Z" fill="url(#petal-grad-3)" opacity="0.85" transform="rotate(180)"/>
+                    <path d="M0 -130 Q -22 -90, 0 -50 Q 22 -90, 0 -130 Z" fill="url(#petal-grad-3)" opacity="0.85" transform="rotate(225)"/>
+                    <path d="M0 -130 Q -22 -90, 0 -50 Q 22 -90, 0 -130 Z" fill="url(#petal-grad)" opacity="0.85" transform="rotate(270)"/>
+                    <path d="M0 -130 Q -22 -90, 0 -50 Q 22 -90, 0 -130 Z" fill="url(#petal-grad-2)" opacity="0.85" transform="rotate(315)"/>
+                  </g>
+                </g>
+
+                <!-- Inner petal layer (8 small, rotated) -->
+                <g class="ring-inner" stroke="#FFFCF9" stroke-width="0.6">
+                  <g transform="translate(200 200)">
+                    <path d="M0 -90 Q -14 -65, 0 -40 Q 14 -65, 0 -90 Z" fill="#483934" opacity="0.85" transform="rotate(22.5)"/>
+                    <path d="M0 -90 Q -14 -65, 0 -40 Q 14 -65, 0 -90 Z" fill="#483934" opacity="0.85" transform="rotate(67.5)"/>
+                    <path d="M0 -90 Q -14 -65, 0 -40 Q 14 -65, 0 -90 Z" fill="#483934" opacity="0.85" transform="rotate(112.5)"/>
+                    <path d="M0 -90 Q -14 -65, 0 -40 Q 14 -65, 0 -90 Z" fill="#483934" opacity="0.85" transform="rotate(157.5)"/>
+                    <path d="M0 -90 Q -14 -65, 0 -40 Q 14 -65, 0 -90 Z" fill="#483934" opacity="0.85" transform="rotate(202.5)"/>
+                    <path d="M0 -90 Q -14 -65, 0 -40 Q 14 -65, 0 -90 Z" fill="#483934" opacity="0.85" transform="rotate(247.5)"/>
+                    <path d="M0 -90 Q -14 -65, 0 -40 Q 14 -65, 0 -90 Z" fill="#483934" opacity="0.85" transform="rotate(292.5)"/>
+                    <path d="M0 -90 Q -14 -65, 0 -40 Q 14 -65, 0 -90 Z" fill="#483934" opacity="0.85" transform="rotate(337.5)"/>
+                  </g>
+                </g>
+
+                <!-- Center -->
+                <circle cx="200" cy="200" r="32" fill="#FFF6E8" stroke="#483934" stroke-width="1"/>
+                <circle cx="200" cy="200" r="20" fill="#DA6E0B"/>
+                <circle cx="200" cy="200" r="8" fill="#FFFCF9"/>
+                <circle cx="200" cy="200" r="3" fill="#483934"/>
+              </svg>
             </div>
           </div>
+        </div>
+
+        <!-- Trust stats row -->
+        <div class="trust-row">
+          <div class="trust-stat">
+            <div class="trust-stat-value">5,000</div>
+            <div class="trust-stat-label">Training samples</div>
+          </div>
+          <div class="trust-divider"></div>
+          <div class="trust-stat">
+            <div class="trust-stat-value">15</div>
+            <div class="trust-stat-label">Quick questions</div>
+          </div>
+          <div class="trust-divider"></div>
+          <div class="trust-stat">
+            <div class="trust-stat-value">100%</div>
+            <div class="trust-stat-label">Stays private</div>
+          </div>
+          <div class="trust-divider"></div>
+          <div class="trust-stat">
+            <div class="trust-stat-value">~3 min</div>
+            <div class="trust-stat-label">To complete</div>
+          </div>
+        </div>
+
+        <!-- Three doshas section -->
+        <div class="section-intro">
+          <div class="section-intro-meta">The Three Doshas</div>
+          <h2 class="section-intro-title">Every body, a unique <em>balance</em>.</h2>
+          <p class="section-intro-sub">In Ayurveda, your constitution arises from the dance of three energies — the elements working through you. Most people lean toward one, blended with another.</p>
         </div>
 
         <!-- Dosha trio -->
