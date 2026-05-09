@@ -455,7 +455,70 @@
     .btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
     .btn-sm { height: 36px; padding: 0 1rem; font-size: 0.8rem; }
 
-    /* ━━ SECTION HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    /* ━━ PAGE HEADER (per-section) ━━━━━━━━━━━━━━━━━━━━━━ */
+    .page-header {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 1rem 0 2rem;
+      position: relative;
+    }
+    .page-header::after {
+      content: "";
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 80px; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--orange) 50%, transparent);
+    }
+    .page-header-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 1rem;
+    }
+    .page-header-meta::before, .page-header-meta::after {
+      content: "";
+      width: 24px; height: 1px;
+      background: var(--orange);
+      opacity: 0.4;
+    }
+    .page-header-title {
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: clamp(1.85rem, 3.8vw, 2.75rem);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: var(--brown);
+      margin-bottom: 1rem;
+    }
+    .page-header-title em { font-style: italic; font-weight: 400; color: var(--teal); }
+    .page-header-sub {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--text-2);
+      max-width: 60ch;
+      margin: 0 auto 1rem;
+    }
+    .page-header-stamp {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.85rem;
+      background: var(--sage);
+      border-radius: 100px;
+      margin-top: 0.5rem;
+    }
+
+    /* legacy section-head (still used inside hero) */
     .section-head {
       display: flex;
       align-items: flex-end;
@@ -934,12 +997,11 @@
 
       <!-- ═══════════ ASSESSMENT ═══════════ -->
       <section class="view" id="view-assessment" aria-labelledby="assessment-head">
-        <div class="section-head">
-          <div>
-            <div class="meta">Part Two</div>
-            <h2 id="assessment-head">The Questions</h2>
-          </div>
-          <span id="q-counter" style="font-family:var(--mono);font-size:0.78rem;color:var(--text-3);">0 / 15</span>
+        <div class="page-header">
+          <div class="page-header-meta">Step Two</div>
+          <h2 id="assessment-head" class="page-header-title">The <em>Questions</em></h2>
+          <p class="page-header-sub">Fifteen short questions about your nature. Trust your first instinct — answer as you typically are, not as you'd like to be.</p>
+          <div class="page-header-stamp"><span id="q-counter">0 / 15</span></div>
         </div>
         <div class="progress-bar" aria-hidden="true"></div>
         <div id="question-container"></div>
@@ -951,12 +1013,11 @@
 
       <!-- ═══════════ RESULT ═══════════ -->
       <section class="view" id="view-result" aria-labelledby="result-head">
-        <div class="section-head">
-          <div>
-            <div class="meta">Part Three</div>
-            <h2 id="result-head">Your Reading</h2>
-          </div>
-          <span id="result-stamp" style="font-family:var(--mono);font-size:0.72rem;color:var(--text-3);"></span>
+        <div class="page-header">
+          <div class="page-header-meta">Step Three</div>
+          <h2 id="result-head" class="page-header-title">Your <em>Reading</em></h2>
+          <p class="page-header-sub">A snapshot of your constitution and the doshas at play in your nature — interpreted by the model and grounded in tradition.</p>
+          <div class="page-header-stamp"><span id="result-stamp">—</span></div>
         </div>
         <div class="verdict">
           <div style="display:grid;gap:1rem;">
@@ -1012,36 +1073,33 @@
 
       <!-- ═══════════ DIET ═══════════ -->
       <section class="view" id="view-diet" aria-labelledby="diet-head">
-        <div class="section-head">
-          <div>
-            <div class="meta">Part Four</div>
-            <h2 id="diet-head">Diet Plan</h2>
-          </div>
-          <span id="diet-dosha-stamp" style="font-family:var(--mono);font-size:0.72rem;color:var(--orange);">—</span>
+        <div class="page-header">
+          <div class="page-header-meta">Step Four</div>
+          <h2 id="diet-head" class="page-header-title">A Plan for the <em>Table</em></h2>
+          <p class="page-header-sub">Foods, tastes, and rhythms that nourish your constitution. Eat with the seasons, eat with attention.</p>
+          <div class="page-header-stamp"><span id="diet-dosha-stamp">—</span></div>
         </div>
         <div id="diet-body"></div>
       </section>
 
       <!-- ═══════════ LIFESTYLE ═══════════ -->
       <section class="view" id="view-lifestyle" aria-labelledby="lifestyle-head">
-        <div class="section-head">
-          <div>
-            <div class="meta">Part Five</div>
-            <h2 id="lifestyle-head">Daily Routine</h2>
-          </div>
-          <span id="lifestyle-dosha-stamp" style="font-family:var(--mono);font-size:0.72rem;color:var(--orange);">—</span>
+        <div class="page-header">
+          <div class="page-header-meta">Step Five</div>
+          <h2 id="lifestyle-head" class="page-header-title">A Plan for the <em>Day</em></h2>
+          <p class="page-header-sub">A daily routine — Dinacharya — keyed to your dosha. Start small; rhythm matters more than perfection.</p>
+          <div class="page-header-stamp"><span id="lifestyle-dosha-stamp">—</span></div>
         </div>
         <div id="lifestyle-body"></div>
       </section>
 
       <!-- ═══════════ AI ASSISTANT ═══════════ -->
       <section class="view" id="view-ai" aria-labelledby="ai-head">
-        <div class="section-head">
-          <div>
-            <div class="meta">Part Six</div>
-            <h2 id="ai-head">AI Assistant</h2>
-          </div>
-          <span id="ai-status" style="font-family:var(--mono);font-size:0.72rem;color:var(--text-3);">Offline</span>
+        <div class="page-header">
+          <div class="page-header-meta">Step Six</div>
+          <h2 id="ai-head" class="page-header-title">An <em>Ayurvedic</em> Conversation</h2>
+          <p class="page-header-sub">Ask anything about your constitution — what to eat, how to rest, when to move. Tailored answers grounded in your reading.</p>
+          <div class="page-header-stamp"><span id="ai-status">Offline</span></div>
         </div>
         <!-- AI provider setup -->
         <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;display:grid;gap:0.75rem;">
@@ -1113,12 +1171,11 @@
 
       <!-- ═══════════ HISTORY ═══════════ -->
       <section class="view" id="view-history" aria-labelledby="history-head">
-        <div class="section-head">
-          <div>
-            <div class="meta">Part Seven</div>
-            <h2 id="history-head">Past Readings</h2>
-          </div>
-          <span id="history-count" style="font-family:var(--mono);font-size:0.72rem;color:var(--text-3);">0 readings</span>
+        <div class="page-header">
+          <div class="page-header-meta">Step Seven</div>
+          <h2 id="history-head" class="page-header-title">Past <em>Readings</em></h2>
+          <p class="page-header-sub">Every reading you've taken, kept on this device alone. Watch how your nature shifts with the seasons.</p>
+          <div class="page-header-stamp"><span id="history-count">0 readings</span></div>
         </div>
         <div id="history-body"></div>
       </section>
