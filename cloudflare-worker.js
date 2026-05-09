@@ -2,33 +2,26 @@
  * Prakriti AI — Cloudflare Worker proxy for Anthropic Claude API
  *
  * Deploy steps:
- *   1. Go to https://workers.cloudflare.com and create a free account
- *   2. Click "Create Worker", paste this entire file, click "Deploy"
- *   3. Go to Settings → Variables → add secret: ANTHROPIC_API_KEY = your key
+ *   1. Go to https://workers.cloudflare.com → sign up free
+ *   2. Click "Workers & Pages" → "Create" → "Worker"
+ *   3. Click "Edit code", delete everything, paste this file, click "Deploy"
  *   4. Copy your worker URL (e.g. https://prakriti-proxy.yourname.workers.dev)
- *   5. In the Prakriti app, open the browser console and run:
- *        window.PRAKRITI_AI_PROXY_URL = "https://your-worker-url.workers.dev"
- *      Or add it permanently to index.html just before </body>:
- *        <script>window.PRAKRITI_AI_PROXY_URL = "https://your-worker-url.workers.dev";</script>
+ *   5. In the Prakriti app → Assistant tab → paste the URL + your Anthropic key
+ *
+ * No environment variables needed — the API key is sent from the app
+ * over HTTPS and forwarded to Anthropic server-side (bypasses CORS).
  */
 
-const ALLOWED_ORIGIN = "*"; // lock this down to your domain in production e.g. "https://prakriti-ai-bice.vercel.app"
+const ALLOWED_ORIGIN = "*";
 
 export default {
-  async fetch(request, env) {
-    // Handle CORS preflight
+  async fetch(request) {
     if (request.method === "OPTIONS") {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-        },
-      });
+      return cors(new Response(null));
     }
 
     if (request.method !== "POST") {
-      return new Response("Method not allowed", { status: 405 });
+      return cors(new Response("Method not allowed", { status: 405 }));
     }
 
     let body;
@@ -38,10 +31,11 @@ export default {
       return json({ error: "Invalid JSON" }, 400);
     }
 
-    const { message, context } = body;
+    const { message, apiKey, context } = body;
     if (!message) return json({ error: "Missing message" }, 400);
+    if (!apiKey)   return json({ error: "Missing apiKey" }, 400);
 
-    // Build system prompt with user's Prakriti context if available
+    // Build system prompt with the user's Prakriti context if available
     let system = `You are an expert Ayurvedic health guide specialising in Prakriti (constitutional) assessment. Give concise, practical, warm advice grounded in Ayurvedic principles.
 
 Rules:
@@ -51,17 +45,16 @@ Rules:
 - Never diagnose or replace professional medical advice.`;
 
     if (context?.constitution) {
-      system += `\n\nThe user's Prakriti: ${context.constitution}. Dosha distribution — Vata ${context.percentages?.vata ?? "?"}%, Pitta ${context.percentages?.pitta ?? "?"}%, Kapha ${context.percentages?.kapha ?? "?"}%. Tailor all advice to this constitution.`;
+      system += `\n\nUser's Prakriti: ${context.constitution}. Distribution — Vata ${context.percentages?.vata ?? "?"}%, Pitta ${context.percentages?.pitta ?? "?"}%, Kapha ${context.percentages?.kapha ?? "?"}%. Tailor all advice to this constitution.`;
     }
 
-    // Call Anthropic
     let anthropicRes;
     try {
       anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": env.ANTHROPIC_API_KEY,
+          "x-api-key": apiKey,
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
@@ -82,17 +75,20 @@ Rules:
 
     const data = await anthropicRes.json();
     const reply = data.content?.[0]?.text ?? "(no response)";
-
-    return json({ reply }, 200);
+    return json({ reply });
   },
 };
 
 function json(body, status = 200) {
-  return new Response(JSON.stringify(body), {
+  return cors(new Response(JSON.stringify(body), {
     status,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-    },
-  });
+    headers: { "Content-Type": "application/json" },
+  }));
+}
+
+function cors(res) {
+  res.headers.set("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  res.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.headers.set("Access-Control-Allow-Headers", "Content-Type");
+  return res;
 }

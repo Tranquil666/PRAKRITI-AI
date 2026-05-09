@@ -498,17 +498,38 @@
     // Symptom analysis
     $("symptoms-analyze").addEventListener("click", analyseSymptoms);
 
+    // Claude (Worker) setup
+    const claudeUrl = $("claude-url-input");
+    const claudeKey = $("claude-key-input");
+    const claudeSave = $("claude-save");
+    const claudeStatus = $("claude-status");
+    if (localStorage.getItem("prakriti.claudeUrl")) claudeUrl.value = localStorage.getItem("prakriti.claudeUrl");
+    if (localStorage.getItem("prakriti.claudeKey")) { claudeKey.value = localStorage.getItem("prakriti.claudeKey"); claudeStatus.textContent = "✓ saved"; }
+    claudeSave.addEventListener("click", () => {
+      const u = claudeUrl.value.trim();
+      const k = claudeKey.value.trim();
+      if (!u || !k) {
+        localStorage.removeItem("prakriti.claudeUrl");
+        localStorage.removeItem("prakriti.claudeKey");
+        claudeStatus.textContent = "cleared";
+      } else {
+        localStorage.setItem("prakriti.claudeUrl", u);
+        localStorage.setItem("prakriti.claudeKey", k);
+        claudeStatus.textContent = "✓ saved";
+      }
+      updateAiStatus();
+    });
+
     // Gemini key setup
     const keyInput  = $("gemini-key-input");
     const keySave   = $("gemini-key-save");
     const keyStatus = $("gemini-key-status");
-    const stored = localStorage.getItem("prakriti.geminiKey");
-    if (stored) { keyInput.value = stored; keyStatus.textContent = "✓ key saved"; }
+    if (localStorage.getItem("prakriti.geminiKey")) { keyInput.value = localStorage.getItem("prakriti.geminiKey"); keyStatus.textContent = "✓ saved"; }
     keySave.addEventListener("click", () => {
       const k = keyInput.value.trim();
       if (!k) { localStorage.removeItem("prakriti.geminiKey"); keyStatus.textContent = "cleared"; updateAiStatus(); return; }
       localStorage.setItem("prakriti.geminiKey", k);
-      keyStatus.textContent = "✓ key saved";
+      keyStatus.textContent = "✓ saved";
       updateAiStatus();
     });
 
@@ -519,10 +540,12 @@
   function updateAiStatus() {
     const status = $("ai-status");
     if (!status) return;
-    const key = localStorage.getItem("prakriti.geminiKey");
-    if (key) { status.textContent = "ONLINE · Gemini"; status.style.color = "var(--kapha)"; }
+    const claudeReady = localStorage.getItem("prakriti.claudeUrl") && localStorage.getItem("prakriti.claudeKey");
+    const geminiReady = localStorage.getItem("prakriti.geminiKey");
+    if (claudeReady)       { status.textContent = "ONLINE · Claude"; status.style.color = "var(--kapha)"; }
+    else if (geminiReady)  { status.textContent = "ONLINE · Gemini"; status.style.color = "var(--kapha)"; }
     else if (window.PRAKRITI_AI_PROXY_URL) { status.textContent = "ONLINE · proxy"; status.style.color = "var(--kapha)"; }
-    else { status.textContent = "OFFLINE · local guide"; status.style.color = "var(--text-3)"; }
+    else                   { status.textContent = "OFFLINE · local guide"; status.style.color = "var(--text-3)"; }
   }
 
   function appendMsg(role, html) {
@@ -577,22 +600,34 @@ Rules:
     const thinking = appendMsg("thinking", "<p>Thinking…</p>");
     thinking.classList.add("thinking");
 
+    const ctx = state.lastResult ? {
+      constitution: state.lastResult.constitution,
+      percentages: state.lastResult.percentages,
+    } : null;
+
     let reply = "";
     try {
+      const claudeUrl = localStorage.getItem("prakriti.claudeUrl");
+      const claudeKey = localStorage.getItem("prakriti.claudeKey");
       const geminiKey = localStorage.getItem("prakriti.geminiKey");
-      if (geminiKey) {
+
+      if (claudeUrl && claudeKey) {
+        // Claude via Cloudflare Worker — key sent in body over HTTPS
+        const res = await fetch(claudeUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, apiKey: claudeKey, context: ctx }),
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        reply = data.reply || "(no reply)";
+      } else if (geminiKey) {
         reply = await callGemini(geminiKey, text);
       } else if (window.PRAKRITI_AI_PROXY_URL) {
         const res = await fetch(window.PRAKRITI_AI_PROXY_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: text,
-            context: state.lastResult ? {
-              constitution: state.lastResult.constitution,
-              percentages: state.lastResult.percentages,
-            } : null,
-          }),
+          body: JSON.stringify({ message: text, context: ctx }),
         });
         const data = await res.json();
         reply = data.reply || data.text || "(no reply)";
