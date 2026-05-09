@@ -513,9 +513,13 @@
         localStorage.removeItem("prakriti.claudeKey");
         claudeStatus.textContent = "cleared";
       } else {
+        // clear Gemini when Claude is active
+        localStorage.removeItem("prakriti.geminiKey");
+        keyInput.value = "";
+        keyStatus.textContent = "";
         localStorage.setItem("prakriti.claudeUrl", u);
         localStorage.setItem("prakriti.claudeKey", k);
-        claudeStatus.textContent = "✓ saved";
+        claudeStatus.textContent = "✓ active";
       }
       updateAiStatus();
     });
@@ -527,9 +531,20 @@
     if (localStorage.getItem("prakriti.geminiKey")) { keyInput.value = localStorage.getItem("prakriti.geminiKey"); keyStatus.textContent = "✓ saved"; }
     keySave.addEventListener("click", () => {
       const k = keyInput.value.trim();
-      if (!k) { localStorage.removeItem("prakriti.geminiKey"); keyStatus.textContent = "cleared"; updateAiStatus(); return; }
+      if (!k) {
+        localStorage.removeItem("prakriti.geminiKey");
+        keyStatus.textContent = "cleared";
+        updateAiStatus();
+        return;
+      }
+      // clear Claude when Gemini is active
+      localStorage.removeItem("prakriti.claudeUrl");
+      localStorage.removeItem("prakriti.claudeKey");
+      claudeUrl.value = "";
+      claudeKey.value = "";
+      claudeStatus.textContent = "";
       localStorage.setItem("prakriti.geminiKey", k);
-      keyStatus.textContent = "✓ saved";
+      keyStatus.textContent = "✓ active";
       updateAiStatus();
     });
 
