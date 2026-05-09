@@ -498,9 +498,31 @@
     // Symptom analysis
     $("symptoms-analyze").addEventListener("click", analyseSymptoms);
 
+    // Gemini key setup
+    const keyInput  = $("gemini-key-input");
+    const keySave   = $("gemini-key-save");
+    const keyStatus = $("gemini-key-status");
+    const stored = localStorage.getItem("prakriti.geminiKey");
+    if (stored) { keyInput.value = stored; keyStatus.textContent = "✓ key saved"; }
+    keySave.addEventListener("click", () => {
+      const k = keyInput.value.trim();
+      if (!k) { localStorage.removeItem("prakriti.geminiKey"); keyStatus.textContent = "cleared"; updateAiStatus(); return; }
+      localStorage.setItem("prakriti.geminiKey", k);
+      keyStatus.textContent = "✓ key saved";
+      updateAiStatus();
+    });
+
     // Status
+    updateAiStatus();
+  }
+
+  function updateAiStatus() {
     const status = $("ai-status");
-    status.textContent = window.PRAKRITI_AI_PROXY_URL ? "ONLINE · proxy" : "OFFLINE · local guide";
+    if (!status) return;
+    const key = localStorage.getItem("prakriti.geminiKey");
+    if (key) { status.textContent = "ONLINE · Gemini"; status.style.color = "var(--kapha)"; }
+    else if (window.PRAKRITI_AI_PROXY_URL) { status.textContent = "ONLINE · proxy"; status.style.color = "var(--kapha)"; }
+    else { status.textContent = "OFFLINE · local guide"; status.style.color = "var(--text-3)"; }
   }
 
   function appendMsg(role, html) {
@@ -514,6 +536,42 @@
     return div;
   }
 
+  function buildGeminiSystemPrompt() {
+    const r = state.lastResult;
+    let prompt = `You are an expert Ayurvedic health guide specialising in Prakriti (constitutional) assessment. Give concise, practical, warm advice grounded in Ayurvedic principles.
+
+Rules:
+- Keep responses to 2–4 short paragraphs.
+- Always relate advice to the user's dosha when known.
+- Use plain, accessible language — no jargon without explanation.
+- Never diagnose or replace professional medical advice.`;
+    if (r) {
+      prompt += `\n\nThe user's Prakriti result: ${r.constitution} (${r.confidence} confidence). Distribution — Vata ${r.percentages.vata}%, Pitta ${r.percentages.pitta}%, Kapha ${r.percentages.kapha}%. Tailor all advice to this constitution.`;
+    }
+    return prompt;
+  }
+
+  async function callGemini(apiKey, userMessage) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: buildGeminiSystemPrompt() }] },
+          contents: [{ role: "user", parts: [{ text: userMessage }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+        }),
+      }
+    );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `Gemini error ${res.status}`);
+    }
+    const data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || "(no response)";
+  }
+
   async function sendChat(text) {
     appendMsg("user", `<p>${escapeHTML(text)}</p>`);
     const thinking = appendMsg("thinking", "<p>Thinking…</p>");
@@ -521,8 +579,10 @@
 
     let reply = "";
     try {
-      if (window.PRAKRITI_AI_PROXY_URL) {
-        // Live: call serverless proxy that holds the API key.
+      const geminiKey = localStorage.getItem("prakriti.geminiKey");
+      if (geminiKey) {
+        reply = await callGemini(geminiKey, text);
+      } else if (window.PRAKRITI_AI_PROXY_URL) {
         const res = await fetch(window.PRAKRITI_AI_PROXY_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -537,15 +597,13 @@
         const data = await res.json();
         reply = data.reply || data.text || "(no reply)";
       } else {
-        // Offline: deterministic local guide.
         reply = localGuide(text);
       }
     } catch (e) {
-      reply = "I could not reach the proxy. Falling back to the local guide.\n\n" + localGuide(text);
+      reply = `Error: ${e.message}. Falling back to local guide.\n\n` + localGuide(text);
     }
 
     thinking.remove();
-    // Plain-text reply, paragraph-split.
     const html = reply.split(/\n{2,}/).map((p) => `<p>${escapeHTML(p)}</p>`).join("");
     appendMsg("assistant", html);
   }

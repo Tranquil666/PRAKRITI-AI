@@ -1074,6 +1074,16 @@
           </div>
           <span id="ai-status" style="font-family:var(--mono);font-size:0.72rem;color:var(--text-3);">Offline</span>
         </div>
+        <!-- Gemini API key setup -->
+        <div id="gemini-setup" style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:1rem 1.25rem;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;opacity:0.6"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="var(--amber)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span style="font-size:0.8rem;color:var(--text-2);font-weight:500;flex-shrink:0;">Gemini API Key</span>
+          <input id="gemini-key-input" type="password" placeholder="Paste your Gemini API key…"
+            style="flex:1;min-width:200px;font-family:var(--mono);font-size:0.78rem;padding:0.5rem 0.85rem;border-radius:8px;border:1px solid var(--border-2);background:var(--bg-3);color:var(--text);outline:none;">
+          <button id="gemini-key-save" class="btn btn-sm" style="flex-shrink:0;">Save</button>
+          <span id="gemini-key-status" style="font-family:var(--mono);font-size:0.7rem;color:var(--text-3);"></span>
+        </div>
+
         <div class="chat-shell">
           <div class="chat-tabs" role="tablist">
             <button role="tab" data-tab="chat" class="active">Chat</button>
