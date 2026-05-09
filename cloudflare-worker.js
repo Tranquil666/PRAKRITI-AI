@@ -48,33 +48,34 @@ Rules:
       system += `\n\nUser's Prakriti: ${context.constitution}. Distribution — Vata ${context.percentages?.vata ?? "?"}%, Pitta ${context.percentages?.pitta ?? "?"}%, Kapha ${context.percentages?.kapha ?? "?"}%. Tailor all advice to this constitution.`;
     }
 
-    let anthropicRes;
+    let groqRes;
     try {
-      anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+      groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
+          "Authorization": `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
+          model: "llama-3.3-70b-versatile",
           max_tokens: 1024,
-          system,
-          messages: [{ role: "user", content: message }],
+          messages: [
+            { role: "system", content: system },
+            { role: "user",   content: message },
+          ],
         }),
       });
     } catch (e) {
-      return json({ error: "Failed to reach Anthropic: " + e.message }, 502);
+      return json({ error: "Failed to reach Groq: " + e.message }, 502);
     }
 
-    if (!anthropicRes.ok) {
-      const err = await anthropicRes.json().catch(() => ({}));
-      return json({ error: err.error?.message || `Anthropic error ${anthropicRes.status}` }, anthropicRes.status);
+    if (!groqRes.ok) {
+      const err = await groqRes.json().catch(() => ({}));
+      return json({ error: err.error?.message || `Groq error ${groqRes.status}` }, groqRes.status);
     }
 
-    const data = await anthropicRes.json();
-    const reply = data.content?.[0]?.text ?? "(no response)";
+    const data = await groqRes.json();
+    const reply = data.choices?.[0]?.message?.content ?? "(no response)";
     return json({ reply });
   },
 };
