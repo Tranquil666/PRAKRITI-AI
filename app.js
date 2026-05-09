@@ -557,9 +557,9 @@
     if (!status) return;
     const claudeReady = localStorage.getItem("prakriti.claudeUrl") && localStorage.getItem("prakriti.claudeKey");
     const geminiReady = localStorage.getItem("prakriti.geminiKey");
-    if (claudeReady)       { status.textContent = "ONLINE · Groq"; status.style.color = "var(--kapha)"; }
-    else if (geminiReady)  { status.textContent = "ONLINE · Gemini"; status.style.color = "var(--kapha)"; }
-    else if (window.PRAKRITI_AI_PROXY_URL) { status.textContent = "ONLINE · proxy"; status.style.color = "var(--kapha)"; }
+    if (claudeReady)       { status.textContent = "ONLINE · Groq"; status.style.color = "#1C8686"; }
+    else if (geminiReady)  { status.textContent = "ONLINE · Gemini"; status.style.color = "#1C8686"; }
+    else if (window.PRAKRITI_AI_PROXY_URL) { status.textContent = "ONLINE · proxy"; status.style.color = "#1C8686"; }
     else                   { status.textContent = "OFFLINE · local guide"; status.style.color = "var(--text-3)"; }
   }
 
